@@ -97,7 +97,9 @@ first_window_num() {
 }
 
 tmux_socket() {
-	echo "$TMUX" | cut -d',' -f1
+	local tmux_socket _tmux_pid _tmux_session
+	IFS=, read -r tmux_socket _tmux_pid _tmux_session <<< "${TMUX?TMUX environment is not set}"
+	printf '%s\n' "${tmux_socket}"
 }
 
 # Tmux option stored in a global variable so that we don't have to "ask"
