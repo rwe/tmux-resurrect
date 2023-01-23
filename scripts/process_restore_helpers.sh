@@ -1,3 +1,5 @@
+# shellcheck shell=bash
+
 restore_pane_processes_enabled() {
 	local restore_processes="$(get_tmux_option "$restore_processes_option" "$restore_processes")"
 	if [ "$restore_processes" == "false" ]; then

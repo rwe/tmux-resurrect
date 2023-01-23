@@ -1,3 +1,5 @@
+# shellcheck shell=bash
+
 if [ -d "$HOME/.tmux/resurrect" ]; then
         default_resurrect_dir="$HOME/.tmux/resurrect"
 else
