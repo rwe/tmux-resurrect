@@ -21,9 +21,9 @@ trap "tmux display-message '$END_MESSAGE'; exit" SIGINT SIGTERM
 main() {
 	local i=0
 	while true; do
-	  i=$(( (i+1) %4 ))
-	  tmux display-message " ${SPIN:$i:1} $MESSAGE"
-	  sleep 0.1
+		i=$(( (i+1) %4 ))
+		tmux display-message " ${SPIN:$i:1} $MESSAGE"
+		sleep 0.1
 	done
 }
 main
