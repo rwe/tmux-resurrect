@@ -283,10 +283,12 @@ save_all() {
 	last_resurrect_file="$(last_resurrect_file)"
 
 	mkdir -p "$(resurrect_dir)"
-	fetch_and_dump_grouped_sessions > "$resurrect_file_path"
-	dump_panes   >> "$resurrect_file_path"
-	dump_windows >> "$resurrect_file_path"
-	dump_state   >> "$resurrect_file_path"
+	{
+		fetch_and_dump_grouped_sessions
+		dump_panes
+		dump_windows
+		dump_state
+	} > "$resurrect_file_path"
 	execute_hook 'post-save-layout' "$resurrect_file_path"
 	if files_differ "$resurrect_file_path" "$last_resurrect_file"; then
 		ln -fs "$(basename "$resurrect_file_path")" "$last_resurrect_file"
