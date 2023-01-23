@@ -181,7 +181,7 @@ new_pane() {
 
 restore_pane() {
 	local pane="$1"
-	while IFS=$d read line_type session_name window_number window_active window_flags pane_index pane_title dir pane_active pane_command pane_full_command; do
+	while IFS=$d read _line_type session_name window_number _window_active _window_flags pane_index pane_title dir _pane_active _pane_command pane_full_command; do
 		dir="$(remove_first_char "$dir")"
 		pane_full_command="$(remove_first_char "$pane_full_command")"
 		if [ "$session_name" == "0" ]; then
@@ -215,7 +215,7 @@ restore_pane() {
 restore_state() {
 	local state="$1"
 	echo "$state" |
-	while IFS=$d read line_type client_session client_last_session; do
+	while IFS=$d read _line_type client_session client_last_session; do
 		tmux switch-client -t "$client_last_session"
 		tmux switch-client -t "$client_session"
 	done
@@ -224,7 +224,7 @@ restore_state() {
 restore_grouped_session() {
 	local grouped_session="$1"
 	echo "$grouped_session" |
-	while IFS=$d read line_type grouped_session original_session alternate_window active_window; do
+	while IFS=$d read _line_type grouped_session original_session _alternate_window _active_window; do
 		TMUX="" tmux -S "$(tmux_socket)" new-session -d -s "$grouped_session" -t "$original_session"
 	done
 }
@@ -232,7 +232,7 @@ restore_grouped_session() {
 restore_active_and_alternate_windows_for_grouped_sessions() {
 	local grouped_session="$1"
 	echo "$grouped_session" |
-	while IFS=$d read line_type grouped_session original_session alternate_window_index active_window_index; do
+	while IFS=$d read _line_type grouped_session original_session alternate_window_index active_window_index; do
 		alternate_window_index="$(remove_first_char "$alternate_window_index")"
 		active_window_index="$(remove_first_char "$active_window_index")"
 		if [ -n "$alternate_window_index" ]; then
@@ -297,7 +297,7 @@ handle_session_0() {
 restore_window_properties() {
 	local window_name
 	\grep '^window' "$(last_resurrect_file)" |
-		while IFS=$d read line_type session_name window_number window_name window_active window_flags window_layout automatic_rename; do
+		while IFS=$d read _line_type session_name window_number window_name _window_active _window_flags window_layout automatic_rename; do
 			tmux select-layout -t "${session_name}:${window_number}" "$window_layout"
 
 			# Below steps are properly handling window names and automatic-rename
@@ -352,7 +352,7 @@ restore_grouped_sessions() {
 restore_active_and_alternate_windows() {
 	awk 'BEGIN { FS="\t"; OFS="\t" } /^window/ && $6 ~ /[*-]/ { print $2, $5, $3; }' "$(last_resurrect_file)" |
 		sort -u |
-		while IFS=$d read session_name active_window window_number; do
+		while IFS=$d read session_name _active_window window_number; do
 			tmux switch-client -t "${session_name}:${window_number}"
 		done
 }
