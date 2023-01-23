@@ -180,7 +180,7 @@ _get_inline_strategy() {
 		if [[ "$proc" =~ "$inline_strategy_token" ]]; then
 			match="$(_get_proc_match_element "$proc")"
 			if _proc_matches_full_command "$pane_full_command" "$match"; then
-				echo "$(_get_proc_restore_command "$pane_full_command" "$proc" "$match")"
+				_get_proc_restore_command "$pane_full_command" "$proc" "$match"
 			fi
 		fi
 	done
