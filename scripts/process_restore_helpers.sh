@@ -1,7 +1,8 @@
 # shellcheck shell=bash
 
 restore_pane_processes_enabled() {
-	local restore_processes="$(get_tmux_option "$restore_processes_option" "$restore_processes")"
+	local restore_processes
+	restore_processes="$(get_tmux_option "$restore_processes_option" "$restore_processes")"
 	if [ "$restore_processes" == "false" ]; then
 		return 1
 	else
@@ -20,18 +21,22 @@ restore_pane_process() {
 		tmux switch-client -t "${session_name}:${window_number}"
 		tmux select-pane -t "$pane_index"
 
-		local inline_strategy="$(_get_inline_strategy "$pane_full_command")" # might not be defined
+		local inline_strategy
+		inline_strategy="$(_get_inline_strategy "$pane_full_command")" # might not be defined
 		if [ -n "$inline_strategy" ]; then
 			# inline strategy exists
 			# check for additional "expansion" of inline strategy, e.g. `vim` to `vim -S`
 			if _strategy_exists "$inline_strategy"; then
-				local strategy_file="$(_get_strategy_file "$inline_strategy")"
-				local inline_strategy="$($strategy_file "$pane_full_command" "$dir")"
+				local strategy_file
+				strategy_file="$(_get_strategy_file "$inline_strategy")"
+				inline_strategy="$($strategy_file "$pane_full_command" "$dir")"
 			fi
 			command="$inline_strategy"
 		elif _strategy_exists "$pane_full_command"; then
-			local strategy_file="$(_get_strategy_file "$pane_full_command")"
-			local strategy_command="$($strategy_file "$pane_full_command" "$dir")"
+			local strategy_file
+			strategy_file="$(_get_strategy_file "$pane_full_command")"
+			local strategy_command
+			strategy_command="$($strategy_file "$pane_full_command" "$dir")"
 			command="$strategy_command"
 		else
 			# just invoke the raw command
@@ -65,7 +70,8 @@ _process_should_be_restored() {
 }
 
 _restore_all_processes() {
-	local restore_processes="$(get_tmux_option "$restore_processes_option" "$restore_processes")"
+	local restore_processes
+	restore_processes="$(get_tmux_option "$restore_processes_option" "$restore_processes")"
 	if [ "$restore_processes" == ":all:" ]; then
 		return 0
 	else
@@ -130,10 +136,12 @@ _get_proc_restore_command() {
 	local pane_full_command="$1"
 	local proc="$2"
 	local match="$3"
-	local restore_element="$(_get_proc_restore_element "$proc")"
+	local restore_element
+	restore_element="$(_get_proc_restore_element "$proc")"
 	if [[ "$restore_element" =~ " ${inline_strategy_arguments_token}" ]]; then
 		# replaces "%" with command arguments
-		local command_arguments="$(_get_command_arguments "$pane_full_command" "$match")"
+		local command_arguments
+		command_arguments="$(_get_command_arguments "$pane_full_command" "$match")"
 		echo "$restore_element" | sed "s,${inline_strategy_arguments_token},${command_arguments},"
 	else
 		echo "$restore_element"
@@ -141,8 +149,11 @@ _get_proc_restore_command() {
 }
 
 _restore_list() {
-	local user_processes="$(get_tmux_option "$restore_processes_option" "$restore_processes")"
-	local default_processes="$(get_tmux_option "$default_proc_list_option" "$default_proc_list")"
+	local user_processes
+	user_processes="$(get_tmux_option "$restore_processes_option" "$restore_processes")"
+
+	local default_processes
+	default_processes="$(get_tmux_option "$default_proc_list_option" "$default_proc_list")"
 	if [ -z "$user_processes" ]; then
 		# user didn't define any processes
 		echo "$default_processes"
@@ -173,9 +184,11 @@ _get_inline_strategy() {
 
 _strategy_exists() {
 	local pane_full_command="$1"
-	local strategy="$(_get_command_strategy "$pane_full_command")"
+	local strategy
+	strategy="$(_get_command_strategy "$pane_full_command")"
 	if [ -n "$strategy" ]; then # strategy set?
-		local strategy_file="$(_get_strategy_file "$pane_full_command")"
+		local strategy_file
+		strategy_file="$(_get_strategy_file "$pane_full_command")"
 		[ -e "$strategy_file" ] # strategy file exists?
 	else
 		return 1
@@ -184,7 +197,8 @@ _strategy_exists() {
 
 _get_command_strategy() {
 	local pane_full_command="$1"
-	local command="$(_just_command "$pane_full_command")"
+	local command
+	command="$(_just_command "$pane_full_command")"
 	get_tmux_option "${restore_process_strategy_option}${command}" ""
 }
 
@@ -194,7 +208,9 @@ _just_command() {
 
 _get_strategy_file() {
 	local pane_full_command="$1"
-	local strategy="$(_get_command_strategy "$pane_full_command")"
-	local command="$(_just_command "$pane_full_command")"
+	local strategy
+	strategy="$(_get_command_strategy "$pane_full_command")"
+	local command
+	command="$(_just_command "$pane_full_command")"
 	echo "$CURRENT_DIR/../strategies/${command}_${strategy}.sh"
 }

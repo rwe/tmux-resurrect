@@ -19,7 +19,8 @@ d=$'\t'
 get_tmux_option() {
 	local option="$1"
 	local default_value="$2"
-	local option_value=$(tmux show-option -gqv "$option")
+	local option_value
+	option_value=$(tmux show-option -gqv "$option")
 	if [ -z "$option_value" ]; then
 		echo "$default_value"
 	else
@@ -33,14 +34,16 @@ display_message() {
 	local message="$1"
 
 	# display_duration defaults to 5 seconds, if not passed as an argument
+	local display_duration
 	if [ "$#" -eq 2 ]; then
-		local display_duration="$2"
+		display_duration="$2"
 	else
-		local display_duration="5000"
+		display_duration="5000"
 	fi
 
 	# saves user-set 'display-time' option
-	local saved_display_time=$(get_tmux_option "display-time" "750")
+	local saved_display_time
+	saved_display_time=$(get_tmux_option "display-time" "750")
 
 	# sets message display time to 5 seconds
 	tmux set-option -gq display-time "$display_duration"
@@ -62,7 +65,8 @@ remove_first_char() {
 }
 
 capture_pane_contents_option_on() {
-	local option="$(get_tmux_option "$pane_contents_option" "off")"
+	local option
+	option="$(get_tmux_option "$pane_contents_option" "off")"
 	[ "$option" == "on" ]
 }
 
@@ -72,7 +76,8 @@ files_differ() {
 
 get_grouped_sessions() {
 	local grouped_sessions_dump="$1"
-	export GROUPED_SESSIONS="${d}$(echo "$grouped_sessions_dump" | cut -f2 -d"$d" | tr "\\n" "$d")"
+	GROUPED_SESSIONS="${d}$(echo "$grouped_sessions_dump" | cut -f2 -d"$d" | tr "\\n" "$d")"
+	export GROUPED_SESSIONS
 }
 
 is_session_grouped() {
@@ -88,7 +93,8 @@ pane_contents_create_archive() {
 }
 
 pane_content_files_restore_from_archive() {
-	local archive_file="$(pane_contents_archive_file)"
+	local archive_file
+	archive_file="$(pane_contents_archive_file)"
 	if [ -f "$archive_file" ]; then
 		mkdir -p "$(pane_contents_dir "restore")"
 		gzip -d < "$archive_file" |
@@ -100,7 +106,8 @@ pane_content_files_restore_from_archive() {
 
 resurrect_dir() {
 	if [ -z "$_RESURRECT_DIR" ]; then
-		local path="$(get_tmux_option "$resurrect_dir_option" "$default_resurrect_dir")"
+		local path
+		path="$(get_tmux_option "$resurrect_dir_option" "$default_resurrect_dir")"
 		# expands tilde, $HOME and $HOSTNAME if used in @resurrect-dir
 		echo "$path" | sed "s,\$HOME,$HOME,g; s,\$HOSTNAME,$(hostname),g; s,\~,$HOME,g"
 	else
@@ -111,7 +118,8 @@ _RESURRECT_DIR="$(resurrect_dir)"
 
 resurrect_file_path() {
 	if [ -z "$_RESURRECT_FILE_PATH" ]; then
-		local timestamp="$(date +"%Y%m%dT%H%M%S")"
+		local timestamp
+		timestamp="$(date +"%Y%m%dT%H%M%S")"
 		echo "$(resurrect_dir)/${RESURRECT_FILE_PREFIX}_${timestamp}.${RESURRECT_FILE_EXTENSION}"
 	else
 		echo "$_RESURRECT_FILE_PATH"

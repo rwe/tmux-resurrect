@@ -6,16 +6,16 @@ source "$CURRENT_DIR/scripts/variables.sh"
 source "$CURRENT_DIR/scripts/helpers.sh"
 
 set_save_bindings() {
-	local key_bindings=$(get_tmux_option "$save_option" "$default_save_key")
-	local key
+	local key key_bindings
+	key_bindings=$(get_tmux_option "$save_option" "$default_save_key")
 	for key in $key_bindings; do
 		tmux bind-key "$key" run-shell "$CURRENT_DIR/scripts/save.sh"
 	done
 }
 
 set_restore_bindings() {
-	local key_bindings=$(get_tmux_option "$restore_option" "$default_restore_key")
-	local key
+	local key key_bindings
+	key_bindings=$(get_tmux_option "$restore_option" "$default_restore_key")
 	for key in $key_bindings; do
 		tmux bind-key "$key" run-shell "$CURRENT_DIR/scripts/restore.sh"
 	done

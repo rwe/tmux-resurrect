@@ -95,7 +95,8 @@ toggle_window_zoom() {
 }
 
 _save_command_strategy_file() {
-	local save_command_strategy="$(get_tmux_option "$save_command_strategy_option" "$default_save_command_strategy")"
+	local save_command_strategy
+	save_command_strategy="$(get_tmux_option "$save_command_strategy_option" "$default_save_command_strategy")"
 	local strategy_file="$CURRENT_DIR/../save_command_strategies/${save_command_strategy}.sh"
 	local default_strategy_file="$CURRENT_DIR/../save_command_strategies/${default_save_command_strategy}.sh"
 	if [ -e "$strategy_file" ]; then # strategy file exists?
@@ -107,7 +108,8 @@ _save_command_strategy_file() {
 
 pane_full_command() {
 	local pane_pid="$1"
-	local strategy_file="$(_save_command_strategy_file)"
+	local strategy_file
+	strategy_file="$(_save_command_strategy_file)"
 	# execute strategy script to get pane full command
 	$strategy_file "$pane_pid"
 }
@@ -123,8 +125,11 @@ number_nonempty_lines_on_screen() {
 # tests if there was any command output in the current pane
 pane_has_any_content() {
 	local pane_id="$1"
-	local history_size="$(tmux display -p -t "$pane_id" -F "#{history_size}")"
-	local cursor_y="$(tmux display -p -t "$pane_id" -F "#{cursor_y}")"
+	local history_size
+	history_size="$(tmux display -p -t "$pane_id" -F "#{history_size}")"
+
+	local cursor_y
+	cursor_y="$(tmux display -p -t "$pane_id" -F "#{cursor_y}")"
 	# doing "cheap" tests first
 	[ "$history_size" -gt 0 ] || # history has any content?
 		[ "$cursor_y" -gt 0 ] || # cursor not in first line?
@@ -178,7 +183,8 @@ dump_grouped_sessions() {
 }
 
 fetch_and_dump_grouped_sessions(){
-	local grouped_sessions_dump="$(dump_grouped_sessions)"
+	local grouped_sessions_dump
+	grouped_sessions_dump="$(dump_grouped_sessions)"
 	get_grouped_sessions "$grouped_sessions_dump"
 	if [ -n "$grouped_sessions_dump" ]; then
 		echo "$grouped_sessions_dump"
@@ -219,7 +225,8 @@ dump_state() {
 }
 
 dump_pane_contents() {
-	local pane_contents_area="$(get_tmux_option "$pane_contents_area_option" "$default_pane_contents_area")"
+	local pane_contents_area
+	pane_contents_area="$(get_tmux_option "$pane_contents_area_option" "$default_pane_contents_area")"
 	dump_panes_raw |
 		while IFS=$d read line_type session_name window_number window_active window_flags pane_index pane_title dir pane_active pane_command pane_pid history_size; do
 			capture_pane_contents "${session_name}:${window_number}.${pane_index}" "$history_size" "$pane_contents_area"
@@ -228,7 +235,8 @@ dump_pane_contents() {
 
 remove_old_backups() {
 	# remove resurrect files older than 30 days (default), but keep at least 5 copies of backup.
-	local delete_after="$(get_tmux_option "$delete_backup_after_option" "$default_delete_backup_after")"
+	local delete_after
+	delete_after="$(get_tmux_option "$delete_backup_after_option" "$default_delete_backup_after")"
 	local -a files
 	files=($(ls -t $(resurrect_dir)/${RESURRECT_FILE_PREFIX}_*.${RESURRECT_FILE_EXTENSION} | tail -n +6))
 	[[ ${#files[@]} -eq 0 ]] ||
@@ -236,8 +244,12 @@ remove_old_backups() {
 }
 
 save_all() {
-	local resurrect_file_path="$(resurrect_file_path)"
-	local last_resurrect_file="$(last_resurrect_file)"
+	local resurrect_file_path
+	resurrect_file_path="$(resurrect_file_path)"
+
+	local last_resurrect_file
+	last_resurrect_file="$(last_resurrect_file)"
+
 	mkdir -p "$(resurrect_dir)"
 	fetch_and_dump_grouped_sessions > "$resurrect_file_path"
 	dump_panes   >> "$resurrect_file_path"
