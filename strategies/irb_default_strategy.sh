@@ -18,6 +18,6 @@ original_command_wo_junk_vars() {
 }
 
 main() {
-	echo "$(original_command_wo_junk_vars)"
+	original_command_wo_junk_vars
 }
 main
