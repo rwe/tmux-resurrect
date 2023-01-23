@@ -118,7 +118,9 @@ tmux_default_command() {
 }
 
 pane_creation_command() {
-	echo "cat '$(pane_contents_file "restore" "${1}:${2}.${3}")'; exec $(tmux_default_command)"
+	# Note that the command itself is a literal shell command, and so is
+	# intentionally spliced with '%s' rather than '%q'.
+	printf 'cat %q; exec %s' "$(pane_contents_file "restore" "${1}:${2}.${3}")" "$(tmux_default_command)"
 }
 
 new_window() {
