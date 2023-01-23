@@ -18,8 +18,7 @@ RESTORE_PANE_CONTENTS="false"
 is_line_type() {
 	local line_type="$1"
 	local line="$2"
-	echo "$line" |
-		\grep -q "^$line_type"
+	[[ "$line" == "$line_type"* ]]
 }
 
 check_saved_session_exists() {
