@@ -181,6 +181,8 @@ new_pane() {
 
 restore_pane() {
 	local pane="$1"
+	local _line_type session_name window_number _window_active _window_flags pane_index pane_title dir _pane_active _pane_command pane_full_command
+
 	while IFS=$d read _line_type session_name window_number _window_active _window_flags pane_index pane_title dir _pane_active _pane_command pane_full_command; do
 		dir="$(remove_first_char "$dir")"
 		pane_full_command="$(remove_first_char "$pane_full_command")"
@@ -214,6 +216,8 @@ restore_pane() {
 
 restore_state() {
 	local state="$1"
+	local _line_type client_session client_last_session
+
 	echo "$state" |
 	while IFS=$d read _line_type client_session client_last_session; do
 		tmux switch-client -t "$client_last_session"
@@ -222,16 +226,20 @@ restore_state() {
 }
 
 restore_grouped_session() {
-	local grouped_session="$1"
-	echo "$grouped_session" |
+	local grouped_session_line="$1"
+	local _line_type grouped_session original_session _alternate_window _active_window
+
+	echo "$grouped_session_line" |
 	while IFS=$d read _line_type grouped_session original_session _alternate_window _active_window; do
 		TMUX="" tmux -S "$(tmux_socket)" new-session -d -s "$grouped_session" -t "$original_session"
 	done
 }
 
 restore_active_and_alternate_windows_for_grouped_sessions() {
-	local grouped_session="$1"
-	echo "$grouped_session" |
+	local grouped_session_line="$1"
+	local _line_type grouped_session original_session alternate_window_index active_window_index
+
+	echo "$grouped_session_line" |
 	while IFS=$d read _line_type grouped_session original_session alternate_window_index active_window_index; do
 		alternate_window_index="$(remove_first_char "$alternate_window_index")"
 		active_window_index="$(remove_first_char "$active_window_index")"
@@ -276,6 +284,8 @@ restore_all_panes() {
 	if is_restoring_pane_contents; then
 		pane_content_files_restore_from_archive
 	fi
+
+	local line
 	while read line; do
 		if is_line_type "pane" "$line"; then
 			restore_pane "$line"
@@ -295,7 +305,8 @@ handle_session_0() {
 }
 
 restore_window_properties() {
-	local window_name
+	local _line_type session_name window_number window_name _window_active _window_flags window_layout automatic_rename
+
 	\grep '^window' "$(last_resurrect_file)" |
 		while IFS=$d read _line_type session_name window_number window_name _window_active _window_flags window_layout automatic_rename; do
 			tmux select-layout -t "${session_name}:${window_number}" "$window_layout"
@@ -315,7 +326,8 @@ restore_window_properties() {
 
 restore_all_pane_processes() {
 	if restore_pane_processes_enabled; then
-		local pane_full_command
+		local session_name window_number pane_index dir pane_full_command
+
 		awk 'BEGIN { FS="\t"; OFS="\t" } /^pane/ && $11 !~ "^:$" { print $2, $3, $6, $8, $11; }' "$(last_resurrect_file)" |
 			while IFS=$d read -r session_name window_number pane_index dir pane_full_command; do
 				dir="$(remove_first_char "$dir")"
@@ -326,6 +338,8 @@ restore_all_pane_processes() {
 }
 
 restore_active_pane_for_each_window() {
+	local session_name window_number active_pane
+
 	awk 'BEGIN { FS="\t"; OFS="\t" } /^pane/ && $9 == 1 { print $2, $3, $6; }' "$(last_resurrect_file)" |
 		while IFS=$d read session_name window_number active_pane; do
 			tmux switch-client -t "${session_name}:${window_number}"
@@ -334,6 +348,8 @@ restore_active_pane_for_each_window() {
 }
 
 restore_zoomed_windows() {
+	local session_name window_number
+
 	awk 'BEGIN { FS="\t"; OFS="\t" } /^pane/ && $5 ~ /Z/ && $9 == 1 { print $2, $3; }' "$(last_resurrect_file)" |
 		while IFS=$d read session_name window_number; do
 			tmux resize-pane -t "${session_name}:${window_number}" -Z
@@ -341,6 +357,8 @@ restore_zoomed_windows() {
 }
 
 restore_grouped_sessions() {
+	local line
+
 	while read line; do
 		if is_line_type "grouped_session" "$line"; then
 			restore_grouped_session "$line"
@@ -350,6 +368,8 @@ restore_grouped_sessions() {
 }
 
 restore_active_and_alternate_windows() {
+	local session_name _active_window window_number
+
 	awk 'BEGIN { FS="\t"; OFS="\t" } /^window/ && $6 ~ /[*-]/ { print $2, $5, $3; }' "$(last_resurrect_file)" |
 		sort -u |
 		while IFS=$d read session_name _active_window window_number; do
@@ -358,6 +378,8 @@ restore_active_and_alternate_windows() {
 }
 
 restore_active_and_alternate_sessions() {
+	local line
+
 	while read line; do
 		if is_line_type "state" "$line"; then
 			restore_state "$line"
