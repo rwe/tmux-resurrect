@@ -55,7 +55,7 @@ get_digits_from_string() {
 tmux_version_int() {
 	local tmux_version_string
 	tmux_version_string=$(tmux -V)
-	echo "$(get_digits_from_string "$tmux_version_string")"
+	get_digits_from_string "$tmux_version_string"
 }
 
 unsupported_version_message() {
