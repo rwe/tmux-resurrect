@@ -220,7 +220,8 @@ dump_windows() {
 			local automatic_rename
 			automatic_rename="$(tmux show-window-options -vt "${session_name}:${window_index}" automatic-rename)"
 			# If the option was unset, use ":" as a placeholder.
-			[ -z "${automatic_rename}" ] && automatic_rename=":"
+			: "${automatic_rename:=:}"
+
 			echo "${line_type}${d}${session_name}${d}${window_index}${d}${window_name}${d}${window_active}${d}${window_flags}${d}${window_layout}${d}${automatic_rename}"
 		done
 }
