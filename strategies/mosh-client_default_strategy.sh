@@ -20,6 +20,6 @@ mosh_command() {
 }
 
 main() {
-	echo "$(mosh_command)"
+	mosh_command
 }
 main
