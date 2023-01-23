@@ -2,12 +2,12 @@
 
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-source $CURRENT_DIR/helpers/helpers.sh
-source $CURRENT_DIR/helpers/resurrect_helpers.sh
+source "$CURRENT_DIR/helpers/helpers.sh"
+source "$CURRENT_DIR/helpers/resurrect_helpers.sh"
 
 create_tmux_test_environment_and_save() {
 	set_screen_dimensions_helper
-	$CURRENT_DIR/helpers/create_and_save_tmux_test_environment.exp
+	"$CURRENT_DIR/helpers/create_and_save_tmux_test_environment.exp"
 }
 
 main() {

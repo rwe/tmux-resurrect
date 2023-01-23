@@ -3,7 +3,7 @@
 if [ -d "$HOME/.tmux/resurrect" ]; then
 	default_resurrect_dir="$HOME/.tmux/resurrect"
 else
-	default_resurrect_dir="${XDG_DATA_HOME:-$HOME/.local/share}"/tmux/resurrect
+	default_resurrect_dir="${XDG_DATA_HOME:-"${HOME}/.local/share"}"/tmux/resurrect
 fi
 resurrect_dir_option="@resurrect-dir"
 
@@ -57,7 +57,7 @@ display_message() {
 
 
 supported_tmux_version_ok() {
-	$CURRENT_DIR/check_tmux_version.sh "$SUPPORTED_VERSION"
+	"$CURRENT_DIR/check_tmux_version.sh" "$SUPPORTED_VERSION"
 }
 
 remove_first_char() {

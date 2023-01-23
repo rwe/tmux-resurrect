@@ -3,7 +3,7 @@
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 PANE_PID="$1"
-COMMAND_PID=$(pgrep -P $PANE_PID)
+COMMAND_PID=$(pgrep -P "$PANE_PID")
 
 exit_safely_if_empty_ppid() {
 	if [ -z "$PANE_PID" ]; then
@@ -16,7 +16,7 @@ full_command() {
 	# See: https://unix.stackexchange.com/a/567021
 	# Avoid complications with system printf by using bash subshell interpolation.
 	# This will properly escape sequences and null in cmdline.
-	cat /proc/${COMMAND_PID}/cmdline | xargs -0 bash -c 'printf "%q " "$0" "$@"'
+	cat "/proc/${COMMAND_PID}/cmdline" | xargs -0 bash -c 'printf "%q " "$0" "$@"'
 }
 
 main() {

@@ -111,7 +111,7 @@ pane_full_command() {
 	local strategy_file
 	strategy_file="$(_save_command_strategy_file)"
 	# execute strategy script to get pane full command
-	$strategy_file "$pane_pid"
+	"$strategy_file" "$pane_pid"
 }
 
 number_nonempty_lines_on_screen() {
@@ -200,8 +200,8 @@ dump_panes() {
 			if is_session_grouped "$session_name"; then
 				continue
 			fi
-			full_command="$(pane_full_command $pane_pid)"
-			dir=$(echo $dir | sed 's/ /\\ /') # escape all spaces in directory path
+			full_command="$(pane_full_command "$pane_pid")"
+			dir=$(echo "$dir" | sed 's/ /\\ /') # escape all spaces in directory path
 			echo "${line_type}${d}${session_name}${d}${window_number}${d}${window_active}${d}${window_flags}${d}${pane_index}${d}${pane_title}${d}${dir}${d}${pane_active}${d}${pane_command}${d}:${full_command}"
 		done
 }
@@ -238,7 +238,7 @@ remove_old_backups() {
 	local delete_after
 	delete_after="$(get_tmux_option "$delete_backup_after_option" "$default_delete_backup_after")"
 	local -a files
-	files=($(ls -t $(resurrect_dir)/${RESURRECT_FILE_PREFIX}_*.${RESURRECT_FILE_EXTENSION} | tail -n +6))
+	files=($(ls -t "$(resurrect_dir)/${RESURRECT_FILE_PREFIX}_"*".${RESURRECT_FILE_EXTENSION}" | tail -n +6))
 	[[ ${#files[@]} -eq 0 ]] ||
 		find "${files[@]}" -type f -mtime "+${delete_after}" -exec rm -v "{}" \; > /dev/null
 }
