@@ -96,10 +96,10 @@ number_nonempty_lines_on_screen() {
 pane_has_any_content() {
 	local pane_id="$1"
 	local history_size
-	history_size="$(tmux display -p -t "$pane_id" -F "#{history_size}")"
+	history_size="$(tmux display -p -t "$pane_id" -F '#{history_size}')"
 
 	local cursor_y
-	cursor_y="$(tmux display -p -t "$pane_id" -F "#{cursor_y}")"
+	cursor_y="$(tmux display -p -t "$pane_id" -F '#{cursor_y}')"
 	# doing "cheap" tests first
 	[[ "$history_size" -gt 0 ]] || # history has any content?
 		[[ "$cursor_y" -gt 0 ]] || # cursor not in first line?
@@ -111,28 +111,28 @@ capture_pane_contents() {
 	local start_line="-$2"
 	local pane_contents_area="$3"
 	if pane_has_any_content "$pane_id"; then
-		if [[ "$pane_contents_area" == "visible" ]]; then
-			start_line="0"
+		if [[ "$pane_contents_area" == 'visible' ]]; then
+			start_line=0
 		fi
 		# the printf hack below removes *trailing* empty lines
-		printf '%s\n' "$(tmux capture-pane -epJ -S "$start_line" -t "$pane_id")" > "$(pane_contents_file "save" "$pane_id")"
+		printf '%s\n' "$(tmux capture-pane -epJ -S "$start_line" -t "$pane_id")" > "$(pane_contents_file 'save' "$pane_id")"
 	fi
 }
 
 get_active_window_index() {
 	local session_name="$1"
-	tmux list-windows -t "$session_name" -F "#{window_flags} #{window_index}" |
+	tmux list-windows -t "$session_name" -F '#{window_flags} #{window_index}' |
 		awk '$1 ~ /\*/ { print $2; }'
 }
 
 get_alternate_window_index() {
 	local session_name="$1"
-	tmux list-windows -t "$session_name" -F "#{window_flags} #{window_index}" |
+	tmux list-windows -t "$session_name" -F '#{window_flags} #{window_index}' |
 		awk '$1 ~ /-/ { print $2; }'
 }
 
 dump_grouped_sessions() {
-	local current_session_group=""
+	local current_session_group=''
 	local original_session
 	local session_group _session_id session_name
 
@@ -173,7 +173,7 @@ fetch_and_dump_grouped_sessions(){
 
 get_grouped_sessions() {
 	local grouped_sessions_dump="$1"
-	GROUPED_SESSIONS="${d}$(echo "$grouped_sessions_dump" | cut -f2 -d"$d" | tr "\\n" "$d")"
+	GROUPED_SESSIONS="${d}$(echo "$grouped_sessions_dump" | cut -f2 -d"$d" | tr '\n' "$d")"
 	export GROUPED_SESSIONS
 }
 
@@ -263,7 +263,7 @@ remove_old_backups() {
 	local -a files
 	files=($(ls -t "$(resurrect_dir)/${RESURRECT_FILE_PREFIX}_"*".${RESURRECT_FILE_EXTENSION}" | tail -n +6))
 	[[ ${#files[@]} -eq 0 ]] ||
-		find "${files[@]}" -type f -mtime "+${delete_after}" -exec rm -v "{}" \; > /dev/null
+		find "${files[@]}" -type f -mtime "+${delete_after}" -exec rm -v '{}' ';' > /dev/null
 }
 
 save_all() {
@@ -278,35 +278,35 @@ save_all() {
 	dump_panes   >> "$resurrect_file_path"
 	dump_windows >> "$resurrect_file_path"
 	dump_state   >> "$resurrect_file_path"
-	execute_hook "post-save-layout" "$resurrect_file_path"
+	execute_hook 'post-save-layout' "$resurrect_file_path"
 	if files_differ "$resurrect_file_path" "$last_resurrect_file"; then
 		ln -fs "$(basename "$resurrect_file_path")" "$last_resurrect_file"
 	else
 		rm "$resurrect_file_path"
 	fi
 	if capture_pane_contents_option_on; then
-		mkdir -p "$(pane_contents_dir "save")"
+		mkdir -p "$(pane_contents_dir 'save')"
 		dump_pane_contents
 		pane_contents_create_archive
-		rm "$(pane_contents_dir "save")"/*
+		rm "$(pane_contents_dir 'save')"/*
 	fi
 	remove_old_backups
-	execute_hook "post-save-all"
+	execute_hook 'post-save-all'
 }
 
 show_output() {
-	[[ "$SCRIPT_OUTPUT" != "quiet" ]]
+	[[ "$SCRIPT_OUTPUT" != 'quiet' ]]
 }
 
 main() {
 	if supported_tmux_version_ok; then
 		if show_output; then
-			start_spinner "Saving..." "Tmux environment saved!"
+			start_spinner 'Saving...' 'Tmux environment saved!'
 		fi
 		save_all
 		if show_output; then
 			stop_spinner
-			display_message "Tmux environment saved!"
+			display_message 'Tmux environment saved!'
 		fi
 	fi
 }
