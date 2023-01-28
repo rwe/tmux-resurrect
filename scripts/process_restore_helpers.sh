@@ -7,7 +7,7 @@ source "$CURRENT_DIR/helpers.sh"
 restore_pane_processes_enabled() {
 	local restore_processes
 	restore_processes="$(get_tmux_option "$restore_processes_option" "$restore_processes")"
-	if [[ "$restore_processes" == "false" ]]; then
+	if [[ "$restore_processes" == false ]]; then
 		return 1
 	else
 		return 0
@@ -46,7 +46,7 @@ restore_pane_process() {
 			# just invoke the raw command
 			command="$pane_full_command"
 		fi
-		tmux send-keys -t "${session_name}:${window_number}.${pane_index}" "$command" "C-m"
+		tmux send-keys -t "${session_name}:${window_number}.${pane_index}" "$command" 'C-m'
 	fi
 }
 
@@ -76,7 +76,7 @@ _process_should_be_restored() {
 _restore_all_processes() {
 	local restore_processes
 	restore_processes="$(get_tmux_option "$restore_processes_option" "$restore_processes")"
-	if [[ "$restore_processes" == ":all:" ]]; then
+	if [[ "$restore_processes" == ':all:' ]]; then
 		return 0
 	else
 		return 1
@@ -201,7 +201,7 @@ _get_command_strategy() {
 	local pane_full_command="$1"
 	local command
 	command="$(_just_command "$pane_full_command")"
-	get_tmux_option "${restore_process_strategy_option}${command}" ""
+	get_tmux_option "${restore_process_strategy_option}${command}" ''
 }
 
 _just_command() {
