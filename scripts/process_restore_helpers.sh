@@ -117,11 +117,11 @@ _proc_matches_full_command() {
 }
 
 _get_proc_match_element() {
-	echo "$1" | sed "s/${inline_strategy_token}.*//"
+	echo "${1%"${inline_strategy_token}"*}"
 }
 
 _get_proc_restore_element() {
-	echo "$1" | sed "s/.*${inline_strategy_token}//"
+	echo "${1##*"${inline_strategy_token}"}"
 }
 
 # given full command: 'ruby /Users/john/bin/my_program arg1 arg2'
@@ -133,7 +133,11 @@ _get_command_arguments() {
 	if _proc_starts_with_tildae "$match"; then
 		match="$(remove_first_char "$match")"
 	fi
-	echo "$pane_full_command" | sed "s,^.*${match}[^ ]* *,,"
+	# Strip out anything leading up to the (first) match.
+	pane_full_command="${pane_full_command#*"${match}"}"
+	# Strip out everything up until the next space.
+	pane_full_command="${pane_full_command#* }"
+	echo "${pane_full_command}"
 }
 
 _get_proc_restore_command() {
@@ -146,7 +150,7 @@ _get_proc_restore_command() {
 		# replaces "%" with command arguments
 		local command_arguments
 		command_arguments="$(_get_command_arguments "$pane_full_command" "$match")"
-		echo "$restore_element" | sed "s,${inline_strategy_arguments_token},${command_arguments},"
+		echo "${restore_element/"${inline_strategy_arguments_token}"/${command_arguments}}"
 	else
 		echo "$restore_element"
 	fi
