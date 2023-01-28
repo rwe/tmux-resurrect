@@ -135,7 +135,7 @@ last_resurrect_file() {
 }
 
 pane_contents_dir() {
-	echo "$(resurrect_dir)/$1/pane_contents/"
+	echo "$(resurrect_dir)/$1/pane_contents"
 }
 
 pane_contents_file() {
