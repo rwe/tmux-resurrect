@@ -173,7 +173,7 @@ fetch_and_dump_grouped_sessions(){
 
 get_grouped_sessions() {
 	local grouped_sessions_dump="$1"
-	GROUPED_SESSIONS="${d}$(echo "$grouped_sessions_dump" | cut -f2 -d"$d" | tr '\n' "$d")"
+	GROUPED_SESSIONS="${d}$({ cut -f2 -d"$d" | tr '\n' "$d"; } <<< "$grouped_sessions_dump")"
 	export GROUPED_SESSIONS
 }
 
