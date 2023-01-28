@@ -24,7 +24,7 @@ is_line_type() {
 check_saved_session_exists() {
 	local resurrect_file
 	resurrect_file="$(last_resurrect_file)"
-	if [ ! -f "$resurrect_file" ]; then
+	if [[ ! -f "$resurrect_file" ]]; then
 		display_message "Tmux resurrect file not found!"
 		return 1
 	fi
@@ -60,7 +60,7 @@ restore_from_scratch_true() {
 }
 
 is_restoring_from_scratch() {
-	[ "$RESTORING_FROM_SCRATCH" == "true" ]
+	[[ "$RESTORING_FROM_SCRATCH" == "true" ]]
 }
 
 restore_pane_contents_true() {
@@ -68,7 +68,7 @@ restore_pane_contents_true() {
 }
 
 is_restoring_pane_contents() {
-	[ "$RESTORE_PANE_CONTENTS" == "true" ]
+	[[ "$RESTORE_PANE_CONTENTS" == "true" ]]
 }
 
 restored_session_0_true() {
@@ -76,7 +76,7 @@ restored_session_0_true() {
 }
 
 has_restored_session_0() {
-	[ "$RESTORED_SESSION_0" == "true" ]
+	[[ "$RESTORED_SESSION_0" == "true" ]]
 }
 
 window_exists() {
@@ -107,7 +107,7 @@ cache_tmux_default_command() {
 	local default_shell
 	default_shell="$(get_tmux_option "default-shell" "")"
 	local opt=""
-	if [ "$(basename "$default_shell")" == "bash" ]; then
+	if [[ "$(basename "$default_shell")" == "bash" ]]; then
 		opt="-l "
 	fi
 	TMUX_DEFAULT_COMMAND="$(get_tmux_option "default-command" "$opt$default_shell")"
@@ -156,7 +156,7 @@ new_session() {
 	# change first window number if necessary
 	local created_window_num
 	created_window_num="$(first_window_num)"
-	if [ "$created_window_num" -ne "$window_number" ]; then
+	if [[ "$created_window_num" -ne "$window_number" ]]; then
 		tmux move-window -s "${session_name}:${created_window_num}" -t "${session_name}:${window_number}"
 	fi
 }
@@ -185,7 +185,7 @@ restore_pane() {
 	while IFS=$d read _line_type session_name window_number _window_active _window_flags pane_index pane_title dir _pane_active _pane_command pane_full_command; do
 		dir="$(remove_first_char "$dir")"
 		pane_full_command="$(remove_first_char "$pane_full_command")"
-		if [ "$session_name" == "0" ]; then
+		if [[ "$session_name" == "0" ]]; then
 			restored_session_0_true
 		fi
 		if pane_exists "$session_name" "$window_number" "$pane_index"; then
@@ -242,10 +242,10 @@ restore_active_and_alternate_windows_for_grouped_sessions() {
 	while IFS=$d read _line_type grouped_session original_session alternate_window_index active_window_index; do
 		alternate_window_index="$(remove_first_char "$alternate_window_index")"
 		active_window_index="$(remove_first_char "$active_window_index")"
-		if [ -n "$alternate_window_index" ]; then
+		if [[ -n "$alternate_window_index" ]]; then
 			tmux switch-client -t "${grouped_session}:${alternate_window_index}"
 		fi
-		if [ -n "$active_window_index" ]; then
+		if [[ -n "$active_window_index" ]]; then
 			tmux switch-client -t "${grouped_session}:${active_window_index}"
 		fi
 	done
@@ -254,7 +254,7 @@ restore_active_and_alternate_windows_for_grouped_sessions() {
 never_ever_overwrite() {
 	local overwrite_option_value
 	overwrite_option_value="$(get_tmux_option "$overwrite_option" "")"
-	[ -n "$overwrite_option_value" ]
+	[[ -n "$overwrite_option_value" ]]
 }
 
 detect_if_restoring_from_scratch() {
@@ -263,7 +263,7 @@ detect_if_restoring_from_scratch() {
 	fi
 	local total_number_of_panes
 	total_number_of_panes="$(tmux list-panes -a | \grep -c .)"
-	if [ "$total_number_of_panes" -eq 1 ]; then
+	if [[ "$total_number_of_panes" -eq 1 ]]; then
 		restore_from_scratch_true
 	fi
 }
@@ -296,7 +296,7 @@ handle_session_0() {
 	if is_restoring_from_scratch && ! has_restored_session_0; then
 		local current_session
 		current_session="$(tmux display -p "#{client_session}")"
-		if [ "$current_session" == "0" ]; then
+		if [[ "$current_session" == "0" ]]; then
 			tmux switch-client -n
 		fi
 		tmux kill-session -t "0"
@@ -315,7 +315,7 @@ restore_window_properties() {
 			# opted for always doing it to keep the code simple.
 			window_name="$(remove_first_char "$window_name")"
 			tmux rename-window -t "${session_name}:${window_number}" "$window_name"
-			if [ "${automatic_rename}" = ":" ]; then
+			if [[ "${automatic_rename}" == ":" ]]; then
 				tmux set-option -u -t "${session_name}:${window_number}" automatic-rename
 			else
 				tmux set-option -t "${session_name}:${window_number}" automatic-rename "$automatic_rename"
