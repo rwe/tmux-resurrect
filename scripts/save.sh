@@ -171,6 +171,17 @@ fetch_and_dump_grouped_sessions(){
 	fi
 }
 
+get_grouped_sessions() {
+	local grouped_sessions_dump="$1"
+	GROUPED_SESSIONS="${d}$(echo "$grouped_sessions_dump" | cut -f2 -d"$d" | tr "\\n" "$d")"
+	export GROUPED_SESSIONS
+}
+
+is_session_grouped() {
+	local session_name="$1"
+	[[ "$GROUPED_SESSIONS" == *"${d}${session_name}${d}"* ]]
+}
+
 # translates pane pid to process command running inside a pane
 dump_panes() {
 	local line_type session_name window_number window_active window_flags pane_index pane_title dir pane_active pane_command pane_pid _history_size
