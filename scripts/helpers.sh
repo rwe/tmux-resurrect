@@ -112,7 +112,10 @@ resurrect_dir() {
 		local path
 		path="$(get_tmux_option "$resurrect_dir_option" "$default_resurrect_dir")"
 		# expands tilde, $HOME and $HOSTNAME if used in @resurrect-dir
-		echo "$path" | sed "s,\$HOME,$HOME,g; s,\$HOSTNAME,$(hostname),g; s,\~,$HOME,g"
+		path="${path//\~/$HOME}"
+		path="${path//\$HOME/$HOME}"
+		path="${path//\$HOSTNAME/$(hostname)}"
+		echo "$path"
 	else
 		echo "$_RESURRECT_DIR"
 	fi
