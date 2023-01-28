@@ -16,7 +16,7 @@ vim_session_file_exists() {
 
 main() {
 	if vim_session_file_exists; then
-		echo "vim -S"
+		echo 'vim -S'
 	else
 		echo "$ORIGINAL_COMMAND"
 	fi
