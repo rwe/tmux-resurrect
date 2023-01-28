@@ -1,5 +1,9 @@
 # shellcheck shell=bash
 
+: "${CURRENT_DIR:="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"}" || :
+
+source "$CURRENT_DIR/helpers.sh"
+
 restore_pane_processes_enabled() {
 	local restore_processes
 	restore_processes="$(get_tmux_option "$restore_processes_option" "$restore_processes")"

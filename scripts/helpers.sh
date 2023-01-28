@@ -1,5 +1,9 @@
 # shellcheck shell=bash
 
+: "${CURRENT_DIR:="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"}" || :
+
+source "${CURRENT_DIR}/variables.sh"
+
 if [ -d "$HOME/.tmux/resurrect" ]; then
 	default_resurrect_dir="$HOME/.tmux/resurrect"
 else
