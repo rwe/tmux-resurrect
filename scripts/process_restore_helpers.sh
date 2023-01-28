@@ -211,7 +211,8 @@ _get_command_strategy() {
 }
 
 _just_command() {
-	echo "$1" | cut -d' ' -f1
+	# Remove everything after first space.
+	echo "${1%% *}"
 }
 
 _get_strategy_file() {
