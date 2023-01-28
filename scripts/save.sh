@@ -134,13 +134,12 @@ get_alternate_window_index() {
 dump_grouped_sessions() {
 	local current_session_group=''
 	local original_session
-	local session_group _session_id session_name
+	local session_is_grouped session_group _session_id session_name
 
 	tmux list-sessions -F "${grouped_sessions_tmux_format}" |
-		grep "^1" |
-		cut -c 3- |
 		sort |
-		while IFS=$d read session_group _session_id session_name; do
+		while IFS=$d read session_is_grouped session_group _session_id session_name; do
+			[[ "${session_is_grouped}" == 1 ]] || continue
 			if [[ "$session_group" != "$current_session_group" ]]; then
 				# this session is the original/first session in the group
 				original_session="$session_name"
