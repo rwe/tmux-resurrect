@@ -64,7 +64,7 @@ supported_tmux_version_ok() {
 }
 
 remove_first_char() {
-	echo "$1" | cut -c2-
+	echo "${1:1}"
 }
 
 capture_pane_contents_option_on() {
