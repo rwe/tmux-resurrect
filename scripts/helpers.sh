@@ -4,9 +4,9 @@
 
 source "${CURRENT_DIR}/variables.sh"
 
-SUPPORTED_VERSION="1.9"
-RESURRECT_FILE_PREFIX="tmux_resurrect"
-RESURRECT_FILE_EXTENSION="txt"
+SUPPORTED_VERSION=1.9
+RESURRECT_FILE_PREFIX=tmux_resurrect
+RESURRECT_FILE_EXTENSION=txt
 
 d=$'\t'
 
@@ -37,7 +37,7 @@ display_message() {
 
 	# saves user-set 'display-time' option, if one was set
 	local saved_display_time
-	if ! saved_display_time="$(get_tmux_option "display-time")"; then
+	if ! saved_display_time="$(get_tmux_option 'display-time')"; then
 		unset saved_display_time
 	fi
 
@@ -64,8 +64,8 @@ remove_first_char() {
 
 capture_pane_contents_option_on() {
 	local option
-	option="$(get_tmux_option "$pane_contents_option" "off")"
-	[[ "$option" == "on" ]]
+	option="$(get_tmux_option "$pane_contents_option" off)"
+	[[ "$option" == on ]]
 }
 
 files_differ() {
@@ -94,7 +94,7 @@ pane_content_files_restore_from_archive() {
 	local archive_file
 	archive_file="$(pane_contents_archive_file)"
 	if [[ -f "$archive_file" ]]; then
-		mkdir -p "$(pane_contents_dir "restore")"
+		mkdir -p "$(pane_contents_dir 'restore')"
 		gzip -d < "$archive_file" |
 			tar xf - -C "$(resurrect_dir)/restore/"
 	fi
@@ -104,7 +104,7 @@ pane_content_files_restore_from_archive() {
 
 get_resurrect_dir_opt() {
 	local path
-	path="$(get_tmux_option "$resurrect_dir_option" "")"
+	path="$(get_tmux_option "$resurrect_dir_option" '')"
 	if [[ -n "${path}" ]]; then
 		# expands tilde, $HOME and $HOSTNAME if used in @resurrect-dir
 		path="${path//\~/$HOME}"
@@ -146,7 +146,7 @@ pane_contents_file() {
 
 pane_contents_file_exists() {
 	local pane_id="$1"
-	[[ -f "$(pane_contents_file "restore" "$pane_id")" ]]
+	[[ -f "$(pane_contents_file 'restore' "$pane_id")" ]]
 }
 
 pane_contents_archive_file() {
@@ -156,14 +156,14 @@ pane_contents_archive_file() {
 execute_hook() {
 	local kind="$1"
 	shift
-	local args="" hook=""
+	local args='' hook=''
 
-	hook=$(get_tmux_option "$hook_prefix$kind" "")
+	hook=$(get_tmux_option "$hook_prefix$kind" '')
 
 	# If there are any args, pass them to the hook (in a way that preserves/copes
 	# with spaces and unusual characters.
-	if [[ "$#" -gt 0 ]]; then
-		printf -v args "%q " "$@"
+	if [[ $# -gt 0 ]]; then
+		printf -v args '%q ' "$@"
 	fi
 
 	if [[ -n "$hook" ]]; then
