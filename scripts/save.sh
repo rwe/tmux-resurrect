@@ -136,29 +136,27 @@ dump_grouped_sessions() {
 	local original_session
 	local session_is_grouped session_group _session_id session_name
 
-	tmux list-sessions -F "${grouped_sessions_tmux_format}" |
-		sort |
-		while IFS=$d read session_is_grouped session_group _session_id session_name; do
-			[[ "${session_is_grouped}" == 1 ]] || continue
-			if [[ "$session_group" != "$current_session_group" ]]; then
-				# this session is the original/first session in the group
-				original_session="$session_name"
-				current_session_group="$session_group"
-			else
-				# this session "points" to the original session
-				local colon_alternate_window_index colon_active_window_index
-				colon_alternate_window_index=":$(get_alternate_window_index "$session_name")"
-				colon_active_window_index=":$(get_active_window_index "$session_name")"
-				local fields=(
-					'grouped_session'
-					"${session_name}"
-					"${original_session}"
-					"${colon_alternate_window_index}"
-					"${colon_active_window_index}"
-				)
-				tmr:fields "${fields[@]}"
-			fi
-		done
+	while IFS=$d read session_is_grouped session_group _session_id session_name; do
+		[[ "${session_is_grouped}" == 1 ]] || continue
+		if [[ "$session_group" != "$current_session_group" ]]; then
+			# this session is the original/first session in the group
+			original_session="$session_name"
+			current_session_group="$session_group"
+		else
+			# this session "points" to the original session
+			local colon_alternate_window_index colon_active_window_index
+			colon_alternate_window_index=":$(get_alternate_window_index "$session_name")"
+			colon_active_window_index=":$(get_active_window_index "$session_name")"
+			local fields=(
+				'grouped_session'
+				"${session_name}"
+				"${original_session}"
+				"${colon_alternate_window_index}"
+				"${colon_active_window_index}"
+			)
+			tmr:fields "${fields[@]}"
+		fi
+	done < <(tmux list-sessions -F "${grouped_sessions_tmux_format}" | sort)
 }
 
 get_grouped_sessions() {
@@ -184,31 +182,30 @@ dump_panes() {
 	local grouped_session_names=("$@")
 
 	local line_type session_name window_index window_active colon_window_flags pane_index pane_title colon_pane_current_path pane_active pane_current_command pane_pid _history_size
-	dump_panes_raw |
-		while IFS=$d read line_type session_name window_index window_active colon_window_flags pane_index pane_title colon_pane_current_path pane_active pane_current_command pane_pid _history_size; do
-			# not saving panes from grouped sessions
-			if is_session_grouped "$session_name" "${grouped_session_names[@]}"; then
-				continue
-			fi
-			local colon_pane_full_command
-			colon_pane_full_command=":$(pane_full_command "$pane_pid")"
-			colon_pane_current_path="${colon_pane_current_path// /\\ }" # escape all spaces in directory path
+	while IFS=$d read line_type session_name window_index window_active colon_window_flags pane_index pane_title colon_pane_current_path pane_active pane_current_command pane_pid _history_size; do
+		# not saving panes from grouped sessions
+		if is_session_grouped "$session_name" "${grouped_session_names[@]}"; then
+			continue
+		fi
+		local colon_pane_full_command
+		colon_pane_full_command=":$(pane_full_command "$pane_pid")"
+		colon_pane_current_path="${colon_pane_current_path// /\\ }" # escape all spaces in directory path
 
-			local fields=(
-				"${line_type}"
-				"${session_name}"
-				"${window_index}"
-				"${window_active}"
-				"${colon_window_flags}"
-				"${pane_index}"
-				"${pane_title}"
-				"${colon_pane_current_path}"
-				"${pane_active}"
-				"${pane_current_command}"
-				"${colon_pane_full_command}"
-			)
-			tmr:fields "${fields[@]}"
-		done
+		local fields=(
+			"${line_type}"
+			"${session_name}"
+			"${window_index}"
+			"${window_active}"
+			"${colon_window_flags}"
+			"${pane_index}"
+			"${pane_title}"
+			"${colon_pane_current_path}"
+			"${pane_active}"
+			"${pane_current_command}"
+			"${colon_pane_full_command}"
+		)
+		tmr:fields "${fields[@]}"
+	done < <(dump_panes_raw)
 }
 
 dump_windows() {
@@ -216,30 +213,29 @@ dump_windows() {
 
 	local line_type session_name window_index colon_window_name window_active colon_window_flags window_layout
 
-	dump_windows_raw |
-		while IFS=$d read line_type session_name window_index colon_window_name window_active colon_window_flags window_layout; do
-			# not saving windows from grouped sessions
-			if is_session_grouped "$session_name" "${grouped_session_names[@]}"; then
-				continue
-			fi
+	while IFS=$d read line_type session_name window_index colon_window_name window_active colon_window_flags window_layout; do
+		# not saving windows from grouped sessions
+		if is_session_grouped "$session_name" "${grouped_session_names[@]}"; then
+			continue
+		fi
 
-			local automatic_rename
-			automatic_rename="$(tmux show-window-options -vt "${session_name}:${window_index}" automatic-rename)"
-			# If the option was unset, use ":" as a placeholder.
-			: "${automatic_rename:=:}"
+		local automatic_rename
+		automatic_rename="$(tmux show-window-options -vt "${session_name}:${window_index}" automatic-rename)"
+		# If the option was unset, use ":" as a placeholder.
+		: "${automatic_rename:=:}"
 
-			local fields=(
-				"${line_type}"
-				"${session_name}"
-				"${window_index}"
-				"${colon_window_name}"
-				"${window_active}"
-				"${colon_window_flags}"
-				"${window_layout}"
-				"${automatic_rename}"
-			)
-			tmr:fields "${fields[@]}"
-		done
+		local fields=(
+			"${line_type}"
+			"${session_name}"
+			"${window_index}"
+			"${colon_window_name}"
+			"${window_active}"
+			"${colon_window_flags}"
+			"${window_layout}"
+			"${automatic_rename}"
+		)
+		tmr:fields "${fields[@]}"
+	done < <(dump_windows_raw)
 }
 
 dump_state() {
@@ -251,10 +247,9 @@ dump_pane_contents() {
 	pane_contents_area="$(get_tmux_option "$pane_contents_area_option" "$default_pane_contents_area")"
 
 	local _line_type session_name window_index _window_active _colon_window_flags pane_index _pane_title _colon_pane_current_path _pane_active _pane_current_command _pane_pid history_size
-	dump_panes_raw |
-		while IFS=$d read _line_type session_name window_index _window_active _colon_window_flags pane_index _pane_title _colon_pane_current_path _pane_active _pane_current_command _pane_pid history_size; do
-			capture_pane_contents "${session_name}:${window_index}.${pane_index}" "$history_size" "$pane_contents_area"
-		done
+	while IFS=$d read _line_type session_name window_index _window_active _colon_window_flags pane_index _pane_title _colon_pane_current_path _pane_active _pane_current_command _pane_pid history_size; do
+		capture_pane_contents "${session_name}:${window_index}.${pane_index}" "$history_size" "$pane_contents_area"
+	done < <(dump_panes_raw)
 }
 
 dump_layout() {
