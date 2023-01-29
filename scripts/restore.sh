@@ -109,7 +109,7 @@ first_window_index() {
 tmux_socket() {
 	local tmux_socket _tmux_pid _tmux_session
 	IFS=, read -r tmux_socket _tmux_pid _tmux_session <<< "${TMUX?TMUX environment is not set}"
-	printf '%s\n' "${tmux_socket}"
+	out "${tmux_socket}"
 }
 
 get_tmux_default_command() {
@@ -129,7 +129,7 @@ tmux_default_command() {
 		TMUX_DEFAULT_COMMAND="$(get_tmux_default_command)"
 		export TMUX_DEFAULT_COMMAND
 	fi
-	echo "$TMUX_DEFAULT_COMMAND"
+	out "$TMUX_DEFAULT_COMMAND"
 }
 
 pane_creation_command() {
