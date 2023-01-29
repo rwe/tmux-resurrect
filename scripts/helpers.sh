@@ -7,7 +7,6 @@ source "${CURRENT_DIR}/variables.sh"
 SUPPORTED_VERSION="1.9"
 RESURRECT_FILE_PREFIX="tmux_resurrect"
 RESURRECT_FILE_EXTENSION="txt"
-_RESURRECT_DIR=""
 _RESURRECT_FILE_PATH=""
 
 d=$'\t'
@@ -102,7 +101,7 @@ pane_content_files_restore_from_archive() {
 # path helpers
 
 resurrect_dir() {
-	if [[ -z "$_RESURRECT_DIR" ]]; then
+	if [[ -z "${_RESURRECT_DIR:-}" ]]; then
 		local path
 		path="$(get_tmux_option "$resurrect_dir_option" "")"
 		if [[ -n "${path}" ]]; then
