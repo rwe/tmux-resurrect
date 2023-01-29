@@ -130,10 +130,6 @@ supported_tmux_version_ok() {
 	"$CURRENT_DIR/check_tmux_version.sh" "$SUPPORTED_VERSION"
 }
 
-remove_first_char() {
-	out "${1:1}"
-}
-
 capture_pane_contents_option_on() {
 	local option
 	option="$(get_tmux_option "$pane_contents_option" off)"

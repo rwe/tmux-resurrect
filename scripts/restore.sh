@@ -187,10 +187,10 @@ restore_pane() {
 
 	while IFS=$d read _line_type session_name window_index _window_active _colon_window_flags pane_index pane_title colon_pane_current_path _pane_active _pane_current_command colon_pane_full_command; do
 		local pane_current_path_goal
-		pane_current_path_goal="$(remove_first_char "$colon_pane_current_path")"
+		pane_current_path_goal="${colon_pane_current_path#:}"
 
 		local pane_full_command_goal
-		pane_full_command_goal="$(remove_first_char "$colon_pane_full_command")"
+		pane_full_command_goal="${colon_pane_full_command#:}"
 
 		if [[ "$session_name" == '0' ]]; then
 			restored_session_0_true
@@ -248,8 +248,8 @@ restore_active_and_alternate_windows_for_grouped_sessions() {
 	echo "$grouped_session_line" |
 	while IFS=$d read _line_type grouped_session original_session colon_alternate_window_index colon_active_window_index; do
 		local alternate_window_index active_window_index
-		alternate_window_index="$(remove_first_char "$colon_active_window_index")"
-		active_window_index="$(remove_first_char "$colon_active_window_index")"
+		alternate_window_index="${colon_alternate_window_index#:}"
+		active_window_index="${colon_active_window_index#:}"
 		if [[ -n "$alternate_window_index" ]]; then
 			tmux switch-client -t "${grouped_session}:${alternate_window_index}"
 		fi
@@ -321,7 +321,7 @@ restore_window_properties() {
 			# option. `rename-window` is an extra command in some scenarios, but we
 			# opted for always doing it to keep the code simple.
 			local window_name
-			window_name="$(remove_first_char "$colon_window_name")"
+			window_name="${colon_window_name#:}"
 			tmux rename-window -t "${session_name}:${window_index}" "$window_name"
 			if [[ "${automatic_rename}" == ':' ]]; then
 				tmux set-option -u -t "${session_name}:${window_index}" automatic-rename
@@ -339,10 +339,10 @@ restore_all_pane_processes() {
 	awk 'BEGIN { FS="\t"; OFS="\t" } /^pane/ && $11 !~ "^:$" { print $2, $3, $6, $8, $11; }' |
 		while IFS=$d read session_name window_index pane_index colon_pane_current_path colon_pane_full_command; do
 			local pane_current_path_goal
-			pane_current_path_goal="$(remove_first_char "$colon_pane_current_path")"
+			pane_current_path_goal="${colon_pane_current_path#:}"
 
 			local pane_full_command_goal
-			pane_full_command_goal="$(remove_first_char "$colon_pane_full_command")"
+			pane_full_command_goal="${colon_pane_full_command#:}"
 
 			restore_pane_process "$pane_full_command_goal" "$session_name" "$window_index" "$pane_index" "$pane_current_path_goal"
 		done
