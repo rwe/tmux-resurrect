@@ -32,6 +32,12 @@ tmr:tmux-fields() {
 	tmr:fields "$@"
 }
 
+# Parse a single tab-delimited, escaped record into fields named by the given args.
+tmr:read() {
+	# The var names given in our arguments are set to those raw field values.
+	IFS="$d" read "$@"
+}
+
 # helper functions
 get_tmux_option() {
 	local option="$1"
