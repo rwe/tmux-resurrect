@@ -22,6 +22,16 @@ out() { printf '%s' "$*"; }
 # Output zero or more literal strings terminated by newlines.
 outln() { printf '%s\n' "$@"; }
 
+tmr:fields() {
+	local IFS="$d"
+	outln "$*"
+}
+
+tmr:tmux-fields() {
+	# Render a sequence of tmux fields joind on tab.
+	tmr:fields "$@"
+}
+
 # helper functions
 get_tmux_option() {
 	local option="$1"
