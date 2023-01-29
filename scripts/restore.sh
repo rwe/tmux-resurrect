@@ -183,11 +183,12 @@ new_pane() {
 
 restore_pane() {
 	local pane="$1"
-	local _line_type session_name window_number _window_active _window_flags pane_index pane_title dir _pane_active _pane_command pane_full_command
+	local _line_type session_name window_number _window_active _colon_window_flags pane_index pane_title colon_dir _pane_active _pane_command colon_pane_full_command
 
-	while IFS=$d read _line_type session_name window_number _window_active _window_flags pane_index pane_title dir _pane_active _pane_command pane_full_command; do
-		dir="$(remove_first_char "$dir")"
-		pane_full_command="$(remove_first_char "$pane_full_command")"
+	while IFS=$d read _line_type session_name window_number _window_active _colon_window_flags pane_index pane_title colon_dir _pane_active _pane_command colon_pane_full_command; do
+		local dir pane_full_command
+		dir="$(remove_first_char "$colon_dir")"
+		pane_full_command="$(remove_first_char "$colon_pane_full_command")"
 		if [[ "$session_name" == '0' ]]; then
 			restored_session_0_true
 		fi
@@ -229,22 +230,23 @@ restore_state() {
 
 restore_grouped_session() {
 	local grouped_session_line="$1"
-	local _line_type grouped_session original_session _alternate_window _active_window
+	local _line_type grouped_session original_session _colon_alternate_window_index _colon_active_window_index
 
 	echo "$grouped_session_line" |
-	while IFS=$d read _line_type grouped_session original_session _alternate_window _active_window; do
+	while IFS=$d read _line_type grouped_session original_session _colon_alternate_window_index _colon_active_window_index; do
 		TMUX='' tmux -S "$(tmux_socket)" new-session -d -s "$grouped_session" -t "$original_session"
 	done
 }
 
 restore_active_and_alternate_windows_for_grouped_sessions() {
 	local grouped_session_line="$1"
-	local _line_type grouped_session original_session alternate_window_index active_window_index
+	local _line_type grouped_session original_session colon_alternate_window_index colon_active_window_index
 
 	echo "$grouped_session_line" |
-	while IFS=$d read _line_type grouped_session original_session alternate_window_index active_window_index; do
-		alternate_window_index="$(remove_first_char "$alternate_window_index")"
-		active_window_index="$(remove_first_char "$active_window_index")"
+	while IFS=$d read _line_type grouped_session original_session colon_alternate_window_index colon_active_window_index; do
+		local alternate_window_index active_window_index
+		alternate_window_index="$(remove_first_char "$colon_active_window_index")"
+		active_window_index="$(remove_first_char "$colon_active_window_index")"
 		if [[ -n "$alternate_window_index" ]]; then
 			tmux switch-client -t "${grouped_session}:${alternate_window_index}"
 		fi
@@ -306,16 +308,17 @@ handle_session_0() {
 }
 
 restore_window_properties() {
-	local _line_type session_name window_number window_name _window_active _window_flags window_layout automatic_rename
+	local _line_type session_name window_number colon_window_name _window_active _colon_window_flags window_layout automatic_rename
 
 	\grep '^window' |
-		while IFS=$d read _line_type session_name window_number window_name _window_active _window_flags window_layout automatic_rename; do
+		while IFS=$d read _line_type session_name window_number colon_window_name _window_active _colon_window_flags window_layout automatic_rename; do
 			tmux select-layout -t "${session_name}:${window_number}" "$window_layout"
 
 			# Below steps are properly handling window names and automatic-rename
 			# option. `rename-window` is an extra command in some scenarios, but we
 			# opted for always doing it to keep the code simple.
-			window_name="$(remove_first_char "$window_name")"
+			local window_name
+			window_name="$(remove_first_char "$colon_window_name")"
 			tmux rename-window -t "${session_name}:${window_number}" "$window_name"
 			if [[ "${automatic_rename}" == ':' ]]; then
 				tmux set-option -u -t "${session_name}:${window_number}" automatic-rename
@@ -328,12 +331,13 @@ restore_window_properties() {
 restore_all_pane_processes() {
 	restore_pane_processes_enabled || return 0
 
-	local session_name window_number pane_index dir pane_full_command
+	local session_name window_number pane_index colon_dir colon_pane_full_command
 
 	awk 'BEGIN { FS="\t"; OFS="\t" } /^pane/ && $11 !~ "^:$" { print $2, $3, $6, $8, $11; }' |
-		while IFS=$d read session_name window_number pane_index dir pane_full_command; do
-			dir="$(remove_first_char "$dir")"
-			pane_full_command="$(remove_first_char "$pane_full_command")"
+		while IFS=$d read session_name window_number pane_index colon_dir colon_pane_full_command; do
+			local dir pane_full_command
+			dir="$(remove_first_char "$colon_dir")"
+			pane_full_command="$(remove_first_char "$colon_pane_full_command")"
 			restore_pane_process "$pane_full_command" "$session_name" "$window_number" "$pane_index" "$dir"
 		done
 }
