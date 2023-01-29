@@ -168,7 +168,7 @@ restore_pane() {
 	local restore_from_scratch="$1" restore_pane_contents="$2"
 
 	local _line_type session_name window_index _window_active _colon_window_flags pane_index pane_title colon_pane_current_path _pane_active _pane_current_command colon_pane_full_command
-	IFS=$d read _line_type session_name window_index _window_active _colon_window_flags pane_index pane_title colon_pane_current_path _pane_active _pane_current_command colon_pane_full_command || return $?
+	tmr:read _line_type session_name window_index _window_active _colon_window_flags pane_index pane_title colon_pane_current_path _pane_active _pane_current_command colon_pane_full_command || return $?
 
 	local pane_current_path_goal
 	pane_current_path_goal="${colon_pane_current_path#:}"
@@ -214,7 +214,7 @@ restore_pane() {
 
 restore_active_and_alternate_session_state() {
 	local _line_type client_session client_last_session
-	IFS=$d read _line_type client_session client_last_session || return $?
+	tmr:read _line_type client_session client_last_session || return $?
 
 	tmux switch-client -t "$client_last_session"
 	tmux switch-client -t "$client_session"
@@ -226,7 +226,7 @@ restore_active_and_alternate_sessions() {
 
 restore_grouped_session() {
 	local _line_type grouped_session original_session _colon_alternate_window_index _colon_active_window_index
-	IFS=$d read _line_type grouped_session original_session _colon_alternate_window_index _colon_active_window_index || return $?
+	tmr:read _line_type grouped_session original_session _colon_alternate_window_index _colon_active_window_index || return $?
 
 	local socket
 	socket="$(tmux_socket)"
@@ -236,7 +236,7 @@ restore_grouped_session() {
 
 restore_active_and_alternate_windows_for_grouped_session() {
 	local _line_type grouped_session original_session colon_alternate_window_index colon_active_window_index
-	IFS=$d read _line_type grouped_session original_session colon_alternate_window_index colon_active_window_index || return $?
+	tmr:read _line_type grouped_session original_session colon_alternate_window_index colon_active_window_index || return $?
 
 	local colon_windex
 	for colon_windex in "${colon_alternate_window_index}" "${colon_active_window_index}"; do
@@ -279,7 +279,7 @@ handle_session_0() {
 
 restore_window_property() {
 	local _line_type session_name window_index colon_window_name _window_active _colon_window_flags window_layout automatic_rename
-	IFS=$d read _line_type session_name window_index colon_window_name _window_active _colon_window_flags window_layout automatic_rename || return $?
+	tmr:read _line_type session_name window_index colon_window_name _window_active _colon_window_flags window_layout automatic_rename || return $?
 
 	tmux select-layout -t "${session_name}:${window_index}" "$window_layout"
 
@@ -302,7 +302,7 @@ restore_window_properties() {
 
 restore_one_pane_process() {
 	local _line_type session_name window_index _window_active _colon_window_flags pane_index _pane_title colon_pane_current_path _pane_active _pane_current_command colon_pane_full_command
-	IFS=$d read _line_type session_name window_index _window_active _colon_window_flags pane_index _pane_title colon_pane_current_path _pane_active _pane_current_command colon_pane_full_command || return $?
+	tmr:read _line_type session_name window_index _window_active _colon_window_flags pane_index _pane_title colon_pane_current_path _pane_active _pane_current_command colon_pane_full_command || return $?
 
 	local pane_current_path_goal
 	pane_current_path_goal="${colon_pane_current_path#:}"
@@ -338,7 +338,7 @@ restore_all_pane_processes() {
 
 restore_active_pane_for_window() {
 	local _line_type session_name window_index _window_active _colon_window_flags pane_index pane_title _colon_pane_current_path pane_active _pane_current_command _colon_pane_full_command
-	IFS=$d read _line_type session_name window_index _window_active _colon_window_flags pane_index pane_title _colon_pane_current_path pane_active _pane_current_command _colon_pane_full_command || return $?
+	tmr:read _line_type session_name window_index _window_active _colon_window_flags pane_index pane_title _colon_pane_current_path pane_active _pane_current_command _colon_pane_full_command || return $?
 	[[ "${pane_active}" == 1 ]] || return 0
 	tmux switch-client -t "${session_name}:${window_index}"
 	tmux select-pane -t "$pane_index"
@@ -350,7 +350,7 @@ restore_active_pane_for_each_window() {
 
 restore_zoomed_window() {
 	local _line_type session_name window_index _window_active colon_window_flags _pane_index _pane_title _colon_pane_current_path pane_active _pane_current_command _colon_pane_full_command
-	IFS=$d read _line_type session_name window_index _window_active colon_window_flags _pane_index _pane_title _colon_pane_current_path pane_active _pane_current_command _colon_pane_full_command || return $?
+	tmr:read _line_type session_name window_index _window_active colon_window_flags _pane_index _pane_title _colon_pane_current_path pane_active _pane_current_command _colon_pane_full_command || return $?
 
 	[[ "${colon_window_flags}" == *Z* ]] || return 0
 	[[ "${pane_active}" == 1 ]] || return 0
@@ -379,7 +379,7 @@ restore_active_and_alternate_windows() {
 	local active_window_targets=()
 
 	local _line_type session_name window_index _colon_window_name _window_active colon_window_flags _window_layout _automatic_rename
-	while IFS=$d read _line_type session_name window_index _colon_window_name _window_active colon_window_flags _window_layout _automatic_rename; do
+	while tmr:read _line_type session_name window_index _colon_window_name _window_active colon_window_flags _window_layout _automatic_rename; do
 		local target="${session_name}:${window_index}"
 		if [[ "$colon_window_flags" == *-* ]]; then
 			alternate_window_targets+=("${target}")
