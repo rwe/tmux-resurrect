@@ -23,7 +23,7 @@ is_line_type() {
 
 check_saved_session_exists() {
 	local resurrect_file
-	resurrect_file="$(last_resurrect_file)"
+	resurrect_file="$1"
 	if [[ ! -f "$resurrect_file" ]]; then
 		display_message 'Tmux resurrect file not found!'
 		return 1
@@ -291,7 +291,7 @@ restore_all_panes() {
 		if is_line_type 'pane' "$line"; then
 			restore_pane "$line"
 		fi
-	done < "$(last_resurrect_file)"
+	done
 }
 
 handle_session_0() {
@@ -308,7 +308,7 @@ handle_session_0() {
 restore_window_properties() {
 	local _line_type session_name window_number window_name _window_active _window_flags window_layout automatic_rename
 
-	\grep '^window' "$(last_resurrect_file)" |
+	\grep '^window' |
 		while IFS=$d read _line_type session_name window_number window_name _window_active _window_flags window_layout automatic_rename; do
 			tmux select-layout -t "${session_name}:${window_number}" "$window_layout"
 
@@ -330,7 +330,7 @@ restore_all_pane_processes() {
 
 	local session_name window_number pane_index dir pane_full_command
 
-	awk 'BEGIN { FS="\t"; OFS="\t" } /^pane/ && $11 !~ "^:$" { print $2, $3, $6, $8, $11; }' "$(last_resurrect_file)" |
+	awk 'BEGIN { FS="\t"; OFS="\t" } /^pane/ && $11 !~ "^:$" { print $2, $3, $6, $8, $11; }' |
 		while IFS=$d read session_name window_number pane_index dir pane_full_command; do
 			dir="$(remove_first_char "$dir")"
 			pane_full_command="$(remove_first_char "$pane_full_command")"
@@ -341,7 +341,7 @@ restore_all_pane_processes() {
 restore_active_pane_for_each_window() {
 	local session_name window_number active_pane
 
-	awk 'BEGIN { FS="\t"; OFS="\t" } /^pane/ && $9 == 1 { print $2, $3, $6; }' "$(last_resurrect_file)" |
+	awk 'BEGIN { FS="\t"; OFS="\t" } /^pane/ && $9 == 1 { print $2, $3, $6; }' |
 		while IFS=$d read session_name window_number active_pane; do
 			tmux switch-client -t "${session_name}:${window_number}"
 			tmux select-pane -t "$active_pane"
@@ -351,7 +351,7 @@ restore_active_pane_for_each_window() {
 restore_zoomed_windows() {
 	local session_name window_number
 
-	awk 'BEGIN { FS="\t"; OFS="\t" } /^pane/ && $5 ~ /Z/ && $9 == 1 { print $2, $3; }' "$(last_resurrect_file)" |
+	awk 'BEGIN { FS="\t"; OFS="\t" } /^pane/ && $5 ~ /Z/ && $9 == 1 { print $2, $3; }' |
 		while IFS=$d read session_name window_number; do
 			tmux resize-pane -t "${session_name}:${window_number}" -Z
 		done
@@ -365,13 +365,13 @@ restore_grouped_sessions() {
 			restore_grouped_session "$line"
 			restore_active_and_alternate_windows_for_grouped_sessions "$line"
 		fi
-	done < "$(last_resurrect_file)"
+	done
 }
 
 restore_active_and_alternate_windows() {
 	local session_name _active_window window_number
 
-	awk 'BEGIN { FS="\t"; OFS="\t" } /^window/ && $6 ~ /[*-]/ { print $2, $5, $3; }' "$(last_resurrect_file)" |
+	awk 'BEGIN { FS="\t"; OFS="\t" } /^window/ && $6 ~ /[*-]/ { print $2, $5, $3; }' |
 		sort -u |
 		while IFS=$d read session_name _active_window window_number; do
 			tmux switch-client -t "${session_name}:${window_number}"
@@ -385,7 +385,7 @@ restore_active_and_alternate_sessions() {
 		if is_line_type 'state' "$line"; then
 			restore_state "$line"
 		fi
-	done < "$(last_resurrect_file)"
+	done
 }
 
 # A cleanup that happens after 'restore_all_panes' seems to fix fish shell
@@ -398,21 +398,26 @@ cleanup_restored_pane_contents() {
 
 main() {
 	supported_tmux_version_ok || return $?
-	check_saved_session_exists || return $?
+
+	local resurrect_file
+	resurrect_file="$(last_resurrect_file)"
+
+	check_saved_session_exists "${resurrect_file}" || return $?
 
 	start_spinner 'Restoring...' 'Tmux restore complete!'
 	execute_hook 'pre-restore-all'
-	restore_all_panes
+	restore_all_panes < "${resurrect_file}"
 	handle_session_0
-	restore_window_properties >/dev/null 2>&1
+	restore_window_properties >/dev/null 2>&1 < "${resurrect_file}"
 	execute_hook 'pre-restore-pane-processes'
-	restore_all_pane_processes
+	restore_all_pane_processes < "${resurrect_file}"
 	# below functions restore exact cursor positions
-	restore_active_pane_for_each_window
-	restore_zoomed_windows
-	restore_grouped_sessions  # also restores active and alt windows for grouped sessions
-	restore_active_and_alternate_windows
-	restore_active_and_alternate_sessions
+	restore_active_pane_for_each_window < "${resurrect_file}"
+	restore_zoomed_windows < "${resurrect_file}"
+	# also restores active and alt windows for grouped sessions
+	restore_grouped_sessions < "${resurrect_file}"
+	restore_active_and_alternate_windows  < "${resurrect_file}"
+	restore_active_and_alternate_sessions < "${resurrect_file}"
 	cleanup_restored_pane_contents
 	execute_hook 'post-restore-all'
 	stop_spinner
