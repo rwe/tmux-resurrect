@@ -7,7 +7,7 @@ source "$CURRENT_DIR/helpers.sh"
 restore_pane_processes_enabled() {
 	local restore_processes
 	restore_processes="$(get_tmux_option "$restore_processes_option" "$restore_processes")"
-	if [ "$restore_processes" == "false" ]; then
+	if [[ "$restore_processes" == "false" ]]; then
 		return 1
 	else
 		return 0
@@ -27,7 +27,7 @@ restore_pane_process() {
 
 		local inline_strategy
 		inline_strategy="$(_get_inline_strategy "$pane_full_command")" # might not be defined
-		if [ -n "$inline_strategy" ]; then
+		if [[ -n "$inline_strategy" ]]; then
 			# inline strategy exists
 			# check for additional "expansion" of inline strategy, e.g. `vim` to `vim -S`
 			if _strategy_exists "$inline_strategy"; then
@@ -76,7 +76,7 @@ _process_should_be_restored() {
 _restore_all_processes() {
 	local restore_processes
 	restore_processes="$(get_tmux_option "$restore_processes_option" "$restore_processes")"
-	if [ "$restore_processes" == ":all:" ]; then
+	if [[ "$restore_processes" == ":all:" ]]; then
 		return 0
 	else
 		return 1
@@ -162,7 +162,7 @@ _restore_list() {
 
 	local default_processes
 	default_processes="$(get_tmux_option "$default_proc_list_option" "$default_proc_list")"
-	if [ -z "$user_processes" ]; then
+	if [[ -z "$user_processes" ]]; then
 		# user didn't define any processes
 		echo "$default_processes"
 	else
@@ -194,10 +194,10 @@ _strategy_exists() {
 	local pane_full_command="$1"
 	local strategy
 	strategy="$(_get_command_strategy "$pane_full_command")"
-	if [ -n "$strategy" ]; then # strategy set?
+	if [[ -n "$strategy" ]]; then # strategy set?
 		local strategy_file
 		strategy_file="$(_get_strategy_file "$pane_full_command")"
-		[ -e "$strategy_file" ] # strategy file exists?
+		[[ -e "$strategy_file" ]] # strategy file exists?
 	else
 		return 1
 	fi
