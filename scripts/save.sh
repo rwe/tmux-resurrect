@@ -242,7 +242,7 @@ remove_old_backups() {
 
 save_all() {
 	local resurrect_file_path
-	resurrect_file_path="$(resurrect_file_path)"
+	resurrect_file_path="$(new_resurrect_file_path)"
 
 	local last_resurrect_file
 	last_resurrect_file="$(last_resurrect_file)"

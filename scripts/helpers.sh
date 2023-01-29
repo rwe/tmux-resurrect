@@ -126,11 +126,6 @@ new_resurrect_file_path() {
 	echo "$(resurrect_dir)/${RESURRECT_FILE_PREFIX}_${timestamp}.${RESURRECT_FILE_EXTENSION}"
 }
 
-resurrect_file_path() {
-	[[ -n "${_RESURRECT_FILE_PATH+x}" ]] || _RESURRECT_FILE_PATH="$(new_resurrect_file_path)"
-	echo "${_RESURRECT_FILE_PATH}"
-}
-
 last_resurrect_file() {
 	echo "$(resurrect_dir)/last"
 }
