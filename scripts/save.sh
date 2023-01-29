@@ -226,7 +226,6 @@ dump_panes() {
 		fi
 		local colon_pane_full_command
 		colon_pane_full_command=":$(pane_full_command "$pane_pid")"
-		colon_pane_current_path="${colon_pane_current_path// /\\ }" # escape all spaces in directory path
 
 		local fields=(
 			"${line_type}"
@@ -305,7 +304,7 @@ dump_layout() {
 		local grouped_session_names_tsv
 		grouped_session_names_tsv="$(get_grouped_sessions <<< "$grouped_sessions_dump")"
 
-		IFS="$d" read -a grouped_session_names <<< "$grouped_session_names_tsv"
+		IFS="$d" read -r -a grouped_session_names <<< "$grouped_session_names_tsv"
 	fi
 
 	dump_panes "${grouped_session_names[@]}"

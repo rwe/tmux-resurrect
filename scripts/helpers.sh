@@ -31,20 +31,98 @@ out() { printf '%s' "$*"; }
 # Output zero or more literal strings terminated by newlines.
 outln() { printf '%s\n' "$@"; }
 
+# Double backslashes, then use that to escape tabs (the field separator) and
+# newlines (the record separator).
+escape_field() {
+	local f="$1"
+	f="${f//"\\"/\\\\}" # double backslashes
+	f="${f//$'\t'/\\t}" # represent tabs as "\t"
+	f="${f//$'\n'/\\n}" # represent newlines as "\n"
+	out "$f"
+}
+
+# Construct a new tmux format which escapes the value produced by the supplied tmux format.
+# The escaping is performed by the tmux server.
+#
+# As an example, the following will produce the correctly-escaped values of
+# `#{pane_current_path}` for each pane and window.
+# > tmux display -p '#{W:#{P:#{'"$(escape_tmux_format_field '#{pane_current_path}')"'}'$'\n}}'
+escape_tmux_format_field() {
+	local f="$1"
+	# Double backslashes as '\\'.
+	printf -v f '#{s/%s/%s/:%s}' $'\\' "\\\\" "${f}"
+	# Represent tabs as '\n'.
+	printf -v f '#{s/%s/%s/:%s}' $'\t' '\\t' "${f}"
+	# Represent newlines as '\n'.
+	printf -v f '#{s/%s/%s/:%s}' $'\n' '\\n' "${f}"
+	out "$f"
+}
+
+# Reverse the above escaping. This must be performed sequentially, to avoid
+# misinterpreting adjacent sequences like "\\\t" and "\\t"
+unescape_field() {
+	local str="${1}" i is_escaping=0 result=''
+	for (( i=0; i < "${#str}"; ++i )); do
+		local char="${str:$i:1}"
+		if [[ $is_escaping -eq 1 ]]; then
+			is_escaping=0
+			local token
+			if [[ "$char" == 't' ]]; then
+				token=$'\t'
+			elif [[ "$char" == 'n' ]]; then
+				token=$'\n'
+			else
+				token="$char"
+			fi
+			result+="$token"
+		elif [[ "$char" == "\\" ]]; then
+			is_escaping=1
+		else
+			result+="$char"
+		fi
+	done
+	out "${result}"
+}
+
 tmr:fields() {
+	# Render a sequence of fields, escaping each field and joining on tab.
+	local f escaped_fields=()
+	for f in "$@"; do
+		escaped_fields+=("$(escape_field "$f")")
+	done
 	local IFS="$d"
-	outln "$*"
+	outln "${escaped_fields[*]}"
 }
 
 tmr:tmux-fields() {
-	# Render a sequence of tmux fields joind on tab.
-	tmr:fields "$@"
+	# Render a sequence of tmux fields, specifying a format for each field which
+	# renders escaped and joined on tab.
+	local f escaped_fields=()
+	for f in "$@"; do
+		escaped_fields+=("$(escape_tmux_format_field "$f")")
+	done
+	local IFS="$d"
+	outln "${escaped_fields[*]}"
 }
 
 # Parse a single tab-delimited, escaped record into fields named by the given args.
 tmr:read() {
+	# Read fields raw, separating only on tabs, until newline.
 	# The var names given in our arguments are set to those raw field values.
-	IFS="$d" read "$@"
+	IFS="$d" read -r "$@" || return $?
+	while [[ $# -gt 0 ]]; do
+		# Get the escaped value of the named var, un-escape it, and store it in
+		# our temp variable. The temp is just to avoid masking error codes.
+		# We're being careful about names here due to intentionally modifying names
+		# from our outer scope. For example, don't call this "field" or "f" in case
+		# this is invoked like `tmr:read a b c d e f`.
+		local _tmr_read_f
+		_tmr_read_f="$(unescape_field "${!1}")"
+		# Update the var to it un-escaped value.
+		printf -v "$1" '%s' "${_tmr_read_f}"
+		# Move to the next var that needs un-escaping.
+		shift
+	done
 }
 
 # Cached value of the integer digits of $(tmux -V).

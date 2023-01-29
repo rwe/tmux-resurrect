@@ -364,7 +364,7 @@ restore_zoomed_windows() {
 
 restore_grouped_session_and_windows() {
 	local line
-	read line || return $?
+	read -r line || return $?
 
 	restore_grouped_session <<< "$line"
 	restore_active_and_alternate_windows_for_grouped_session <<< "$line"
