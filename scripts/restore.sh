@@ -141,8 +141,8 @@ pane_creation_command() {
 new_window() {
 	local session_name="$1"
 	local window_index="$2"
-	local pane_current_path_goal="$3"
-	local pane_index="$4"
+	local pane_index="$3"
+	local pane_current_path_goal="$4"
 	local pane_id="${session_name}:${window_index}.${pane_index}"
 	if is_restoring_pane_contents && pane_contents_file_exists "$pane_id"; then
 		local pane_creation_command
@@ -156,8 +156,8 @@ new_window() {
 new_session() {
 	local session_name="$1"
 	local window_index="$2"
-	local pane_current_path_goal="$3"
-	local pane_index="$4"
+	local pane_index="$3"
+	local pane_current_path_goal="$4"
 	local pane_id="${session_name}:${window_index}.${pane_index}"
 	if is_restoring_pane_contents && pane_contents_file_exists "$pane_id"; then
 		local pane_creation_command
@@ -177,8 +177,8 @@ new_session() {
 new_pane() {
 	local session_name="$1"
 	local window_index="$2"
-	local pane_current_path_goal="$3"
-	local pane_index="$4"
+	local pane_index="$3"
+	local pane_current_path_goal="$4"
 	local pane_id="${session_name}:${window_index}.${pane_index}"
 	if is_restoring_pane_contents && pane_contents_file_exists "$pane_id"; then
 		local pane_creation_command
@@ -211,7 +211,7 @@ restore_pane() {
 			# happens only for the first pane if it's the only registered pane for the whole tmux server
 			local pane_id
 			pane_id="$(tmux display-message -p -F '#{pane_id}' -t "$session_name:$window_index")"
-			new_pane "$session_name" "$window_index" "$pane_current_path_goal" "$pane_index"
+			new_pane "$session_name" "$window_index" "$pane_index" "$pane_current_path_goal"
 			tmux kill-pane -t "$pane_id"
 		else
 			# Pane exists, no need to create it!
@@ -219,11 +219,11 @@ restore_pane() {
 			register_existing_pane "$session_name" "$window_index" "$pane_index"
 		fi
 	elif window_exists "$session_name" "$window_index"; then
-		new_pane "$session_name" "$window_index" "$pane_current_path_goal" "$pane_index"
+		new_pane "$session_name" "$window_index" "$pane_index" "$pane_current_path_goal"
 	elif session_exists "$session_name"; then
-		new_window "$session_name" "$window_index" "$pane_current_path_goal" "$pane_index"
+		new_window "$session_name" "$window_index" "$pane_index" "$pane_current_path_goal"
 	else
-		new_session "$session_name" "$window_index" "$pane_current_path_goal" "$pane_index"
+		new_session "$session_name" "$window_index" "$pane_index" "$pane_current_path_goal"
 	fi
 	# set pane title
 	tmux select-pane -t "$session_name:$window_index.$pane_index" -T "$pane_title"
