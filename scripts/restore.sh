@@ -287,7 +287,7 @@ restore_all_panes() {
 		pane_content_files_restore_from_archive
 	fi
 
-	restore_pane < <(\grep '^pane')
+	restore_pane < <(records-of-type 'pane' || :)
 }
 
 handle_session_0() {
@@ -304,7 +304,7 @@ handle_session_0() {
 restore_window_properties() {
 	local _line_type session_name window_index colon_window_name _window_active _colon_window_flags window_layout automatic_rename
 
-	\grep '^window' |
+	records-of-type 'window' |
 		while IFS=$d read _line_type session_name window_index colon_window_name _window_active _colon_window_flags window_layout automatic_rename; do
 			tmux select-layout -t "${session_name}:${window_index}" "$window_layout"
 
@@ -327,7 +327,7 @@ restore_all_pane_processes() {
 
 	local _line_type session_name window_index _window_active _colon_window_flags pane_index _pane_title colon_pane_current_path _pane_active _pane_current_command colon_pane_full_command
 
-	\grep '^pane' |
+	records-of-type 'pane' |
 		while IFS=$d read _line_type session_name window_index _window_active _colon_window_flags pane_index _pane_title colon_pane_current_path _pane_active _pane_current_command colon_pane_full_command; do
 			local pane_current_path_goal
 			pane_current_path_goal="${colon_pane_current_path#:}"
@@ -343,7 +343,7 @@ restore_all_pane_processes() {
 restore_active_pane_for_each_window() {
 	local _line_type session_name window_index _window_active _colon_window_flags pane_index pane_title _colon_pane_current_path pane_active _pane_current_command _colon_pane_full_command
 
-	\grep '^pane' |
+	records-of-type 'pane' |
 		while IFS=$d read _line_type session_name window_index _window_active _colon_window_flags pane_index pane_title _colon_pane_current_path pane_active _pane_current_command _colon_pane_full_command; do
 			[[ "${pane_active}" == 1 ]] || continue
 			tmux switch-client -t "${session_name}:${window_index}"
@@ -354,7 +354,7 @@ restore_active_pane_for_each_window() {
 restore_zoomed_windows() {
 	local _line_type session_name window_index _window_active colon_window_flags _pane_index _pane_title _colon_pane_current_path pane_active _pane_current_command _colon_pane_full_command
 
-	\grep '^pane' |
+	records-of-type 'pane' |
 		while IFS=$d read _line_type session_name window_index _window_active colon_window_flags _pane_index _pane_title _colon_pane_current_path pane_active _pane_current_command _colon_pane_full_command; do
 			[[ "${colon_window_flags}" == *Z* ]] || continue
 			[[ "${pane_active}" == 1 ]] || continue
@@ -368,7 +368,7 @@ restore_grouped_sessions() {
 	while read line; do
 		restore_grouped_session <<< "$line"
 		restore_active_and_alternate_windows_for_grouped_sessions <<< "$line"
-	done < <(\grep '^grouped_session')
+	done < <(records-of-type 'grouped_session' || :)
 }
 
 restore_active_and_alternate_windows() {
@@ -384,7 +384,7 @@ restore_active_and_alternate_windows() {
 		elif [[ "$colon_window_flags" == *\** ]]; then
 			active_window_targets+=("${target}")
 		fi
-	done < <(\grep '^window')
+	done < <(records-of-type 'window' || :)
 
 	# Switch to each "alternate" window first, then each "active" window.
 	local target
@@ -394,7 +394,7 @@ restore_active_and_alternate_windows() {
 }
 
 restore_active_and_alternate_sessions() {
-	restore_state < <(\grep '^state')
+	restore_state < <(records-of-type 'state' || :)
 }
 
 # A cleanup that happens after 'restore_all_panes' seems to fix fish shell
