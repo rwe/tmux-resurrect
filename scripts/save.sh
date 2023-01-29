@@ -20,7 +20,7 @@ grouped_sessions_tmux_format() {
 }
 
 _pane_tmux_fields=(
-	'pane'
+	'#{l:pane}'
 	'#{session_name}'
 	'#{window_index}'
 	'#{window_active}'
@@ -39,7 +39,7 @@ pane_tmux_format() {
 }
 
 _window_tmux_fields=(
-	'window'
+	'#{l:window}'
 	'#{session_name}'
 	'#{window_index}'
 	':#{window_name}'
@@ -53,7 +53,7 @@ window_tmux_format() {
 }
 
 _state_tmux_fields=(
-	'state'
+	'#{l:state}'
 	'#{client_session}'
 	'#{client_last_session}'
 )
