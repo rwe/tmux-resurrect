@@ -304,62 +304,55 @@ handle_session_0() {
 restore_window_properties() {
 	local _line_type session_name window_index colon_window_name _window_active _colon_window_flags window_layout automatic_rename
 
-	records-of-type 'window' |
-		while IFS=$d read _line_type session_name window_index colon_window_name _window_active _colon_window_flags window_layout automatic_rename; do
-			tmux select-layout -t "${session_name}:${window_index}" "$window_layout"
+	while IFS=$d read _line_type session_name window_index colon_window_name _window_active _colon_window_flags window_layout automatic_rename; do
+		tmux select-layout -t "${session_name}:${window_index}" "$window_layout"
 
-			# Below steps are properly handling window names and automatic-rename
-			# option. `rename-window` is an extra command in some scenarios, but we
-			# opted for always doing it to keep the code simple.
-			local window_name
-			window_name="${colon_window_name#:}"
-			tmux rename-window -t "${session_name}:${window_index}" "$window_name"
-			if [[ "${automatic_rename}" == ':' ]]; then
-				tmux set-option -u -t "${session_name}:${window_index}" automatic-rename
-			else
-				tmux set-option -t "${session_name}:${window_index}" automatic-rename "$automatic_rename"
-			fi
-		done
+		# Below steps are properly handling window names and automatic-rename
+		# option. `rename-window` is an extra command in some scenarios, but we
+		# opted for always doing it to keep the code simple.
+		local window_name
+		window_name="${colon_window_name#:}"
+		tmux rename-window -t "${session_name}:${window_index}" "$window_name"
+		if [[ "${automatic_rename}" == ':' ]]; then
+			tmux set-option -u -t "${session_name}:${window_index}" automatic-rename
+		else
+			tmux set-option -t "${session_name}:${window_index}" automatic-rename "$automatic_rename"
+		fi
+	done < <(records-of-type 'window' || :)
 }
 
 restore_all_pane_processes() {
 	restore_pane_processes_enabled || return 0
 
 	local _line_type session_name window_index _window_active _colon_window_flags pane_index _pane_title colon_pane_current_path _pane_active _pane_current_command colon_pane_full_command
+	while IFS=$d read _line_type session_name window_index _window_active _colon_window_flags pane_index _pane_title colon_pane_current_path _pane_active _pane_current_command colon_pane_full_command; do
+		local pane_current_path_goal
+		pane_current_path_goal="${colon_pane_current_path#:}"
 
-	records-of-type 'pane' |
-		while IFS=$d read _line_type session_name window_index _window_active _colon_window_flags pane_index _pane_title colon_pane_current_path _pane_active _pane_current_command colon_pane_full_command; do
-			local pane_current_path_goal
-			pane_current_path_goal="${colon_pane_current_path#:}"
+		local pane_full_command_goal
+		pane_full_command_goal="${colon_pane_full_command#:}"
+		[[ -n "${pane_full_command_goal}" ]] || continue
 
-			local pane_full_command_goal
-			pane_full_command_goal="${colon_pane_full_command#:}"
-			[[ -n "${pane_full_command_goal}" ]] || continue
-
-			restore_pane_process "$pane_full_command_goal" "$session_name" "$window_index" "$pane_index" "$pane_current_path_goal"
-		done
+		restore_pane_process "$pane_full_command_goal" "$session_name" "$window_index" "$pane_index" "$pane_current_path_goal"
+	done < <(records-of-type 'pane' || :)
 }
 
 restore_active_pane_for_each_window() {
 	local _line_type session_name window_index _window_active _colon_window_flags pane_index pane_title _colon_pane_current_path pane_active _pane_current_command _colon_pane_full_command
-
-	records-of-type 'pane' |
-		while IFS=$d read _line_type session_name window_index _window_active _colon_window_flags pane_index pane_title _colon_pane_current_path pane_active _pane_current_command _colon_pane_full_command; do
-			[[ "${pane_active}" == 1 ]] || continue
-			tmux switch-client -t "${session_name}:${window_index}"
-			tmux select-pane -t "$pane_index"
-		done
+	while IFS=$d read _line_type session_name window_index _window_active _colon_window_flags pane_index pane_title _colon_pane_current_path pane_active _pane_current_command _colon_pane_full_command; do
+		[[ "${pane_active}" == 1 ]] || continue
+		tmux switch-client -t "${session_name}:${window_index}"
+		tmux select-pane -t "$pane_index"
+	done < <(records-of-type 'pane' || :)
 }
 
 restore_zoomed_windows() {
 	local _line_type session_name window_index _window_active colon_window_flags _pane_index _pane_title _colon_pane_current_path pane_active _pane_current_command _colon_pane_full_command
-
-	records-of-type 'pane' |
-		while IFS=$d read _line_type session_name window_index _window_active colon_window_flags _pane_index _pane_title _colon_pane_current_path pane_active _pane_current_command _colon_pane_full_command; do
-			[[ "${colon_window_flags}" == *Z* ]] || continue
-			[[ "${pane_active}" == 1 ]] || continue
-			tmux resize-pane -t "${session_name}:${window_index}" -Z
-		done
+	while IFS=$d read _line_type session_name window_index _window_active colon_window_flags _pane_index _pane_title _colon_pane_current_path pane_active _pane_current_command _colon_pane_full_command; do
+		[[ "${colon_window_flags}" == *Z* ]] || continue
+		[[ "${pane_active}" == 1 ]] || continue
+		tmux resize-pane -t "${session_name}:${window_index}" -Z
+	done < <(records-of-type 'pane' || :)
 }
 
 restore_grouped_sessions() {
