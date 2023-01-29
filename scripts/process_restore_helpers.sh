@@ -77,11 +77,14 @@ _restore_all_processes() {
 
 _process_on_the_restore_list() {
 	local pane_full_command="$1"
-	# TODO: make this work without eval
-	eval set $(_restore_list)
+
+	local procs=()
+	read -r -a procs < <(_restore_list)
+
 	local proc
-	local match
-	for proc in "$@"; do
+	for proc in "${procs[@]}"; do
+		[[ -n "$proc" ]] || continue
+		local match
 		match="$(_get_proc_match_element "$proc")"
 		if _proc_matches_full_command "$pane_full_command" "$match"; then
 			return 0
@@ -157,17 +160,18 @@ _restore_list() {
 
 _get_inline_strategy() {
 	local pane_full_command="$1"
-	# TODO: make this work without eval
-	eval set $(_restore_list)
+
+	local procs=()
+	read -r -a procs < <(_restore_list)
+
 	local proc
-	local match
-	for proc in "$@"; do
-		if [[ "$proc" == *"$inline_strategy_token"* ]]; then
-			match="$(_get_proc_match_element "$proc")"
-			if _proc_matches_full_command "$pane_full_command" "$match"; then
-				_get_proc_restore_command "$pane_full_command" "$proc" "$match"
-				return 0
-			fi
+	for proc in "${procs[@]}"; do
+		[[ "$proc" == *"$inline_strategy_token"* ]] || continue
+		local match
+		match="$(_get_proc_match_element "$proc")"
+		if _proc_matches_full_command "$pane_full_command" "$match"; then
+			_get_proc_restore_command "$pane_full_command" "$proc" "$match"
+			return 0
 		fi
 	done
 }
