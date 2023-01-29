@@ -10,16 +10,28 @@ RESURRECT_FILE_EXTENSION=txt
 
 d=$'\t'
 
+# 'echo' has some dangerous edge cases due to how it parses flags.
+# For example, `echo "$foo"` will output nothing if `foo='-e'`.
+# This makes it brittle to use in the context of arbitrary expansions.
+# These helpers print their arguments literally, making them composable.
+
+# Output zero or more literal strings.
+# If more than one argument is provided, they are joined on IFS.
+out() { printf '%s' "$*"; }
+
+# Output zero or more literal strings terminated by newlines.
+outln() { printf '%s\n' "$@"; }
+
 # helper functions
 get_tmux_option() {
 	local option="$1"
 	local option_value status=0
 	option_value=$(tmux show-option -gv "$option" 2>/dev/null) || status=$?
 	if [[ $status -eq 0 ]]; then
-		echo "$option_value"
+		out "$option_value"
 	elif [[ $status -eq 1 && $# -eq 2 ]]; then
 		local default_value="$2"
-		echo "$default_value"
+		out "$default_value"
 	else
 		# Some other failure.
 		return $status
@@ -59,7 +71,7 @@ supported_tmux_version_ok() {
 }
 
 remove_first_char() {
-	echo "${1:1}"
+	out "${1:1}"
 }
 
 capture_pane_contents_option_on() {
@@ -114,33 +126,33 @@ get_resurrect_dir_opt() {
 	else
 		path="${XDG_DATA_HOME:-"${HOME}/.local/share"}"/tmux/resurrect
 	fi
-	echo "${path}"
+	out "${path}"
 }
 
 resurrect_dir() {
 	[[ -n "${_RESURRECT_DIR+x}" ]] || _RESURRECT_DIR="$(get_resurrect_dir_opt)"
-	echo "${_RESURRECT_DIR}"
+	out "${_RESURRECT_DIR}"
 }
 
 new_resurrect_file_path() {
 	local timestamp
 	timestamp="$(date '+%Y%m%dT%H%M%S')"
-	echo "$(resurrect_dir)/${RESURRECT_FILE_PREFIX}_${timestamp}.${RESURRECT_FILE_EXTENSION}"
+	out "$(resurrect_dir)/${RESURRECT_FILE_PREFIX}_${timestamp}.${RESURRECT_FILE_EXTENSION}"
 }
 
 last_resurrect_file() {
-	echo "$(resurrect_dir)/last"
+	out "$(resurrect_dir)/last"
 }
 
 pane_contents_dir() {
 	local save_or_restore="$1"
-	echo "$(resurrect_dir)/${save_or_restore}/pane_contents"
+	out "$(resurrect_dir)/${save_or_restore}/pane_contents"
 }
 
 pane_contents_file() {
 	local save_or_restore="$1"
 	local pane_id="$2"
-	echo "$(pane_contents_dir "$save_or_restore")/pane-${pane_id}"
+	out "$(pane_contents_dir "$save_or_restore")/pane-${pane_id}"
 }
 
 pane_contents_file_exists() {
@@ -149,7 +161,7 @@ pane_contents_file_exists() {
 }
 
 pane_contents_archive_file() {
-	echo "$(resurrect_dir)/pane_contents.tar.gz"
+	out "$(resurrect_dir)/pane_contents.tar.gz"
 }
 
 execute_hook() {
