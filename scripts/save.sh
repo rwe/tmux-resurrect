@@ -112,7 +112,7 @@ pane_has_any_content() {
 	history_and_cursor="$(tmux display -p -t "$pane_id" -F "${history_cursor_tmux_format}")"
 
 	local history_size cursor_y
-	IFS="$d" read history_size cursor_y <<< "${history_and_cursor}"
+	tmr:read history_size cursor_y <<< "${history_and_cursor}"
 
 	# history has any content?
 	[[ "$history_size" -le 0 ]] || return 0
@@ -158,7 +158,7 @@ dump_grouped_sessions() {
 	local grouped_sessions
 	grouped_sessions="$(tmux list-sessions -F "${grouped_sessions_tmux_format}" | sort)"
 
-	while IFS=$d read session_is_grouped session_group _session_id session_name; do
+	while tmr:read session_is_grouped session_group _session_id session_name; do
 		[[ "${session_is_grouped}" == 1 ]] || continue
 		if [[ "$session_group" != "$current_session_group" ]]; then
 			# this session is the original/first session in the group
@@ -170,7 +170,7 @@ dump_grouped_sessions() {
 			window_flag_indices="$(tmux list-windows -t "$session_name" -F "${window_flag_index_tmux_format}")"
 
 			local alternate_window_index='' active_window_index=''
-			while IFS=$d read window_flag window_index; do
+			while tmr:read window_flag window_index; do
 				if [[ "$window_flag" == '*' ]]; then
 					active_window_index="$window_index"
 				elif [[ "$window_flag" == '-' ]]; then
@@ -197,7 +197,7 @@ get_grouped_sessions() {
 	# Reads grouped_session records and outputs tab-separated list of sessions.
 	local _line_type session_name _original_session _colon_alternate_window_index _colon_active_window_index
 	local grouped_session_names=()
-	while IFS="$d" read _line_type session_name _original_session _colon_alternate_window_index _colon_active_window_index; do
+	while tmr:read _line_type session_name _original_session _colon_alternate_window_index _colon_active_window_index; do
 		grouped_session_names+=("${session_name}")
 	done
 	local IFS="$d"
@@ -218,7 +218,7 @@ dump_panes() {
 	raw_panes="$(dump_panes_raw)"
 
 	local line_type session_name window_index window_active colon_window_flags pane_index pane_title colon_pane_current_path pane_active pane_current_command pane_pid _history_size
-	while IFS=$d read line_type session_name window_index window_active colon_window_flags pane_index pane_title colon_pane_current_path pane_active pane_current_command pane_pid _history_size; do
+	while tmr:read line_type session_name window_index window_active colon_window_flags pane_index pane_title colon_pane_current_path pane_active pane_current_command pane_pid _history_size; do
 		# not saving panes from grouped sessions
 		if is_session_grouped "$session_name" "${grouped_session_names[@]}"; then
 			continue
@@ -251,7 +251,7 @@ dump_windows() {
 
 	local line_type session_name window_index colon_window_name window_active colon_window_flags window_layout
 
-	while IFS=$d read line_type session_name window_index colon_window_name window_active colon_window_flags window_layout; do
+	while tmr:read line_type session_name window_index colon_window_name window_active colon_window_flags window_layout; do
 		# not saving windows from grouped sessions
 		if is_session_grouped "$session_name" "${grouped_session_names[@]}"; then
 			continue
@@ -288,7 +288,7 @@ dump_pane_contents() {
 	raw_panes="$(dump_panes_raw)"
 
 	local _line_type session_name window_index _window_active _colon_window_flags pane_index _pane_title _colon_pane_current_path _pane_active _pane_current_command _pane_pid history_size
-	while IFS=$d read _line_type session_name window_index _window_active _colon_window_flags pane_index _pane_title _colon_pane_current_path _pane_active _pane_current_command _pane_pid history_size; do
+	while tmr:read _line_type session_name window_index _window_active _colon_window_flags pane_index _pane_title _colon_pane_current_path _pane_active _pane_current_command _pane_pid history_size; do
 		capture_pane_contents "${session_name}:${window_index}.${pane_index}" "$history_size" "$pane_contents_area"
 	done <<< "${raw_panes}"
 }
