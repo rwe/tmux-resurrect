@@ -104,12 +104,12 @@ _proc_matches_full_command() {
 	if _proc_starts_with_tildae "$match"; then
 		match="$(remove_first_char "$match")"
 		# regex matching the command makes sure `$match` string is somewhere in the command string
-		if [[ "$pane_full_command" =~ ($match) ]]; then
+		if [[ "$pane_full_command" =~ ("$match") ]]; then
 			return 0
 		fi
 	else
 		# regex matching the command makes sure process is a "word"
-		if [[ "$pane_full_command" =~ (^${match} ) ]] || [[ "$pane_full_command" =~ (^${match}$) ]]; then
+		if [[ "$pane_full_command" =~ (^"${match}" ) ]] || [[ "$pane_full_command" =~ (^"${match}"$) ]]; then
 			return 0
 		fi
 	fi
