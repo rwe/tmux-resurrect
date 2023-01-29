@@ -11,7 +11,7 @@ ORIGINAL_COMMAND="$1"
 DIRECTORY="$2"
 
 vim_session_file_exists() {
-	[ -e "${DIRECTORY}/Session.vim" ]
+	[[ -e "${DIRECTORY}/Session.vim" ]]
 }
 
 main() {

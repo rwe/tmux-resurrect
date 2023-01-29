@@ -9,7 +9,7 @@ ORIGINAL_COMMAND="$1"
 DIRECTORY="$2"
 
 nvim_session_file_exists() {
-	[ -e "${DIRECTORY}/Session.vim" ]
+	[[ -e "${DIRECTORY}/Session.vim" ]]
 }
 
 original_command_contains_session_flag() {
