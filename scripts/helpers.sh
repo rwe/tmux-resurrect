@@ -4,12 +4,6 @@
 
 source "${CURRENT_DIR}/variables.sh"
 
-if [[ -d "$HOME/.tmux/resurrect" ]]; then
-	default_resurrect_dir="$HOME/.tmux/resurrect"
-else
-	default_resurrect_dir="${XDG_DATA_HOME:-"${HOME}/.local/share"}"/tmux/resurrect
-fi
-
 SUPPORTED_VERSION="1.9"
 RESURRECT_FILE_PREFIX="tmux_resurrect"
 RESURRECT_FILE_EXTENSION="txt"
@@ -110,11 +104,17 @@ pane_content_files_restore_from_archive() {
 resurrect_dir() {
 	if [[ -z "$_RESURRECT_DIR" ]]; then
 		local path
-		path="$(get_tmux_option "$resurrect_dir_option" "$default_resurrect_dir")"
-		# expands tilde, $HOME and $HOSTNAME if used in @resurrect-dir
-		path="${path//\~/$HOME}"
-		path="${path//\$HOME/$HOME}"
-		path="${path//\$HOSTNAME/$(hostname)}"
+		path="$(get_tmux_option "$resurrect_dir_option" "")"
+		if [[ -n "${path}" ]]; then
+			# expands tilde, $HOME and $HOSTNAME if used in @resurrect-dir
+			path="${path//\~/$HOME}"
+			path="${path//\$HOME/$HOME}"
+			path="${path//\$HOSTNAME/$(hostname)}"
+		elif [[ -d "$HOME/.tmux/resurrect" ]]; then
+			path="$HOME/.tmux/resurrect"
+		else
+			path="${XDG_DATA_HOME:-"${HOME}/.local/share"}"/tmux/resurrect
+		fi
 		echo "$path"
 	else
 		echo "$_RESURRECT_DIR"
