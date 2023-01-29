@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 VERSION="$1"
-UNSUPPORTED_MSG="$2"
+UNSUPPORTED_MSG="${2:-"Error, Tmux version unsupported! Please install Tmux version $VERSION or greater!"}"
 
 get_tmux_option() {
 	local option=$1
@@ -56,14 +56,6 @@ coerce-int() {
 	echo $(( int ))
 }
 
-unsupported_version_message() {
-	if [ -n "$UNSUPPORTED_MSG" ]; then
-		echo "$UNSUPPORTED_MSG"
-	else
-		echo "Error, Tmux version unsupported! Please install Tmux version $VERSION or greater!"
-	fi
-}
-
 main() {
 	local supported_version_int
 	supported_version_int="$(coerce-int "$VERSION")"
@@ -75,7 +67,7 @@ main() {
 	tmux_version_int="$(coerce-int "$tmux_version_string")"
 
 	if (( tmux_version_int < supported_version_int )); then
-		display_message "$(unsupported_version_message)"
+		display_message "$UNSUPPORTED_MSG"
 		exit 1
 	fi
 }
