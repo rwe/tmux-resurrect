@@ -161,19 +161,6 @@ dump_grouped_sessions() {
 		done
 }
 
-fetch_and_dump_grouped_sessions(){
-	local grouped_sessions_dump
-	grouped_sessions_dump="$(dump_grouped_sessions)"
-
-	[[ -n "$grouped_sessions_dump" ]] || return 0
-	echo "$grouped_sessions_dump"
-
-	local grouped_session_names_tsv
-	grouped_session_names_tsv="$(get_grouped_sessions <<< "$grouped_sessions_dump")"
-
-	IFS="$d" read -a GROUPED_SESSIONS <<< "${grouped_session_names_tsv}"
-}
-
 get_grouped_sessions() {
 	# Reads grouped_session records and outputs tab-separated list of sessions.
 	local _line_type session_name _original_session _colon_alternate_window_index _colon_active_window_index
@@ -271,9 +258,19 @@ dump_pane_contents() {
 }
 
 dump_layout() {
-	fetch_and_dump_grouped_sessions
-	dump_panes "${GROUPED_SESSIONS[@]}"
-	dump_windows "${GROUPED_SESSIONS[@]}"
+	local grouped_sessions_dump grouped_session_names=()
+	grouped_sessions_dump="$(dump_grouped_sessions)"
+	if [[ -n "$grouped_sessions_dump" ]]; then
+		echo "$grouped_sessions_dump"
+
+		local grouped_session_names_tsv
+		grouped_session_names_tsv="$(get_grouped_sessions <<< "$grouped_sessions_dump")"
+
+		IFS="$d" read -a grouped_session_names <<< "$grouped_session_names_tsv"
+	fi
+
+	dump_panes "${grouped_session_names[@]}"
+	dump_windows "${grouped_session_names[@]}"
 	dump_state
 }
 
