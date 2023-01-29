@@ -96,7 +96,7 @@ _save_command_strategy_file() {
 	save_command_strategy="$(get_tmux_option "$save_command_strategy_option" "$default_save_command_strategy")"
 	local strategy_file="$CURRENT_DIR/../save_command_strategies/${save_command_strategy}.sh"
 	local default_strategy_file="$CURRENT_DIR/../save_command_strategies/${default_save_command_strategy}.sh"
-	if [ -e "$strategy_file" ]; then # strategy file exists?
+	if [[ -e "$strategy_file" ]]; then # strategy file exists?
 		echo "$strategy_file"
 	else
 		echo "$default_strategy_file"
@@ -128,9 +128,9 @@ pane_has_any_content() {
 	local cursor_y
 	cursor_y="$(tmux display -p -t "$pane_id" -F "#{cursor_y}")"
 	# doing "cheap" tests first
-	[ "$history_size" -gt 0 ] || # history has any content?
-		[ "$cursor_y" -gt 0 ] || # cursor not in first line?
-		[ "$(number_nonempty_lines_on_screen "$pane_id")" -gt 1 ]
+	[[ "$history_size" -gt 0 ]] || # history has any content?
+		[[ "$cursor_y" -gt 0 ]] || # cursor not in first line?
+		[[ "$(number_nonempty_lines_on_screen "$pane_id")" -gt 1 ]]
 }
 
 capture_pane_contents() {
@@ -138,7 +138,7 @@ capture_pane_contents() {
 	local start_line="-$2"
 	local pane_contents_area="$3"
 	if pane_has_any_content "$pane_id"; then
-		if [ "$pane_contents_area" = "visible" ]; then
+		if [[ "$pane_contents_area" == "visible" ]]; then
 			start_line="0"
 		fi
 		# the printf hack below removes *trailing* empty lines
@@ -166,7 +166,7 @@ dump_grouped_sessions() {
 		cut -c 3- |
 		sort |
 		while IFS=$d read session_group session_id session_name; do
-			if [ "$session_group" != "$current_session_group" ]; then
+			if [[ "$session_group" != "$current_session_group" ]]; then
 				# this session is the original/first session in the group
 				original_session="$session_name"
 				current_session_group="$session_group"
@@ -183,7 +183,7 @@ fetch_and_dump_grouped_sessions(){
 	local grouped_sessions_dump
 	grouped_sessions_dump="$(dump_grouped_sessions)"
 	get_grouped_sessions "$grouped_sessions_dump"
-	if [ -n "$grouped_sessions_dump" ]; then
+	if [[ -n "$grouped_sessions_dump" ]]; then
 		echo "$grouped_sessions_dump"
 	fi
 }
@@ -269,7 +269,7 @@ save_all() {
 }
 
 show_output() {
-	[ "$SCRIPT_OUTPUT" != "quiet" ]
+	[[ "$SCRIPT_OUTPUT" != "quiet" ]]
 }
 
 main() {
