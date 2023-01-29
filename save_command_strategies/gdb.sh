@@ -5,7 +5,7 @@ CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PANE_PID="$1"
 
 exit_safely_if_empty_ppid() {
-	if [ -z "$PANE_PID" ]; then
+	if [[ -z "$PANE_PID" ]]; then
 		exit 0
 	fi
 }

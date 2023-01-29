@@ -16,7 +16,7 @@ pane_id_prefix="resurrect_"
 HISTS_DIR=$HOME/.bash_history.d
 mkdir -p "${HISTS_DIR}"
 
-if [ -n "${TMUX_PANE}" ]; then
+if [[ -n "${TMUX_PANE}" ]]; then
 
   # Check if we've already set this pane title
   pane_id=$(tmux display -pt "${TMUX_PANE:?}" "#{pane_title}")
