@@ -4,7 +4,7 @@
 
 source "${CURRENT_DIR}/variables.sh"
 
-if [ -d "$HOME/.tmux/resurrect" ]; then
+if [[ -d "$HOME/.tmux/resurrect" ]]; then
 	default_resurrect_dir="$HOME/.tmux/resurrect"
 else
 	default_resurrect_dir="${XDG_DATA_HOME:-"${HOME}/.local/share"}"/tmux/resurrect
@@ -24,7 +24,7 @@ get_tmux_option() {
 	local default_value="$2"
 	local option_value
 	option_value=$(tmux show-option -gqv "$option")
-	if [ -z "$option_value" ]; then
+	if [[ -z "$option_value" ]]; then
 		echo "$default_value"
 	else
 		echo "$option_value"
@@ -38,7 +38,7 @@ display_message() {
 
 	# display_duration defaults to 5 seconds, if not passed as an argument
 	local display_duration
-	if [ "$#" -eq 2 ]; then
+	if [[ "$#" -eq 2 ]]; then
 		display_duration="$2"
 	else
 		display_duration="5000"
@@ -70,7 +70,7 @@ remove_first_char() {
 capture_pane_contents_option_on() {
 	local option
 	option="$(get_tmux_option "$pane_contents_option" "off")"
-	[ "$option" == "on" ]
+	[[ "$option" == "on" ]]
 }
 
 files_differ() {
@@ -98,7 +98,7 @@ pane_contents_create_archive() {
 pane_content_files_restore_from_archive() {
 	local archive_file
 	archive_file="$(pane_contents_archive_file)"
-	if [ -f "$archive_file" ]; then
+	if [[ -f "$archive_file" ]]; then
 		mkdir -p "$(pane_contents_dir "restore")"
 		gzip -d < "$archive_file" |
 			tar xf - -C "$(resurrect_dir)/restore/"
@@ -108,7 +108,7 @@ pane_content_files_restore_from_archive() {
 # path helpers
 
 resurrect_dir() {
-	if [ -z "$_RESURRECT_DIR" ]; then
+	if [[ -z "$_RESURRECT_DIR" ]]; then
 		local path
 		path="$(get_tmux_option "$resurrect_dir_option" "$default_resurrect_dir")"
 		# expands tilde, $HOME and $HOSTNAME if used in @resurrect-dir
@@ -120,7 +120,7 @@ resurrect_dir() {
 _RESURRECT_DIR="$(resurrect_dir)"
 
 resurrect_file_path() {
-	if [ -z "$_RESURRECT_FILE_PATH" ]; then
+	if [[ -z "$_RESURRECT_FILE_PATH" ]]; then
 		local timestamp
 		timestamp="$(date +"%Y%m%dT%H%M%S")"
 		echo "$(resurrect_dir)/${RESURRECT_FILE_PREFIX}_${timestamp}.${RESURRECT_FILE_EXTENSION}"
@@ -147,7 +147,7 @@ pane_contents_file() {
 
 pane_contents_file_exists() {
 	local pane_id="$1"
-	[ -f "$(pane_contents_file "restore" "$pane_id")" ]
+	[[ -f "$(pane_contents_file "restore" "$pane_id")" ]]
 }
 
 pane_contents_archive_file() {
@@ -163,11 +163,11 @@ execute_hook() {
 
 	# If there are any args, pass them to the hook (in a way that preserves/copes
 	# with spaces and unusual characters.
-	if [ "$#" -gt 0 ]; then
+	if [[ "$#" -gt 0 ]]; then
 		printf -v args "%q " "$@"
 	fi
 
-	if [ -n "$hook" ]; then
+	if [[ -n "$hook" ]]; then
 		eval "$hook $args"
 	fi
 }
