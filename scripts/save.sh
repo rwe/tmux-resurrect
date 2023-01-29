@@ -147,15 +147,15 @@ dump_grouped_sessions() {
 				current_session_group="$session_group"
 			else
 				# this session "points" to the original session
-				local alternate_window_index active_window_index
-				active_window_index="$(get_active_window_index "$session_name")"
-				alternate_window_index="$(get_alternate_window_index "$session_name")"
+				local colon_alternate_window_index colon_active_window_index
+				colon_alternate_window_index=":$(get_alternate_window_index "$session_name")"
+				colon_active_window_index=":$(get_active_window_index "$session_name")"
 				local fields=(
 					'grouped_session'
 					"${session_name}"
 					"${original_session}"
-					":${alternate_window_index}"
-					":${active_window_index}"
+					"${colon_alternate_window_index}"
+					"${colon_active_window_index}"
 				)
 				tmr:fields "${fields[@]}"
 			fi
@@ -184,38 +184,38 @@ is_session_grouped() {
 
 # translates pane pid to process command running inside a pane
 dump_panes() {
-	local line_type session_name window_number window_active window_flags pane_index pane_title dir pane_active pane_command pane_pid _history_size
+	local line_type session_name window_number window_active colon_window_flags pane_index pane_title colon_dir pane_active pane_command pane_pid _history_size
 	dump_panes_raw |
-		while IFS=$d read line_type session_name window_number window_active window_flags pane_index pane_title dir pane_active pane_command pane_pid _history_size; do
+		while IFS=$d read line_type session_name window_number window_active colon_window_flags pane_index pane_title colon_dir pane_active pane_command pane_pid _history_size; do
 			# not saving panes from grouped sessions
 			if is_session_grouped "$session_name"; then
 				continue
 			fi
-			local full_command
-			full_command="$(pane_full_command "$pane_pid")"
-			dir="${dir// /\\ }" # escape all spaces in directory path
+			local colon_full_command
+			colon_full_command=":$(pane_full_command "$pane_pid")"
+			colon_dir="${colon_dir// /\\ }" # escape all spaces in directory path
 			local fields=(
 				"${line_type}"
 				"${session_name}"
 				"${window_number}"
 				"${window_active}"
-				"${window_flags}"
+				"${colon_window_flags}"
 				"${pane_index}"
 				"${pane_title}"
-				"${dir}"
+				"${colon_dir}"
 				"${pane_active}"
 				"${pane_command}"
-				":${full_command}"
+				"${colon_full_command}"
 			)
 			tmr:fields "${fields[@]}"
 		done
 }
 
 dump_windows() {
-	local line_type session_name window_index window_name window_active window_flags window_layout
+	local line_type session_name window_index colon_window_name window_active colon_window_flags window_layout
 
 	dump_windows_raw |
-		while IFS=$d read line_type session_name window_index window_name window_active window_flags window_layout; do
+		while IFS=$d read line_type session_name window_index colon_window_name window_active colon_window_flags window_layout; do
 			# not saving windows from grouped sessions
 			if is_session_grouped "$session_name"; then
 				continue
@@ -230,9 +230,9 @@ dump_windows() {
 				"${line_type}"
 				"${session_name}"
 				"${window_index}"
-				"${window_name}"
+				"${colon_window_name}"
 				"${window_active}"
-				"${window_flags}"
+				"${colon_window_flags}"
 				"${window_layout}"
 				"${automatic_rename}"
 			)
@@ -248,9 +248,9 @@ dump_pane_contents() {
 	local pane_contents_area
 	pane_contents_area="$(get_tmux_option "$pane_contents_area_option" "$default_pane_contents_area")"
 
-	local _line_type session_name window_number _window_active _window_flags pane_index _pane_title _dir _pane_active _pane_command _pane_pid history_size
+	local _line_type session_name window_number _window_active _colon_window_flags pane_index _pane_title _colon_dir _pane_active _pane_command _pane_pid history_size
 	dump_panes_raw |
-		while IFS=$d read _line_type session_name window_number _window_active _window_flags pane_index _pane_title _dir _pane_active _pane_command _pane_pid history_size; do
+		while IFS=$d read _line_type session_name window_number _window_active _colon_window_flags pane_index _pane_title _colon_dir _pane_active _pane_command _pane_pid history_size; do
 			capture_pane_contents "${session_name}:${window_number}.${pane_index}" "$history_size" "$pane_contents_area"
 		done
 }
