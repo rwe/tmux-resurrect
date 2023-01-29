@@ -113,10 +113,7 @@ pane_full_command() {
 
 number_nonempty_lines_on_screen() {
 	local pane_id="$1"
-	tmux capture-pane -pJ -t "$pane_id" |
-		sed '/^$/d' |
-		wc -l |
-		sed 's/ //g'
+	tmux capture-pane -pJ -t "$pane_id" | \grep -c .
 }
 
 # tests if there was any command output in the current pane
