@@ -217,35 +217,32 @@ restore_pane() {
 		fi
 		# set pane title
 		tmux select-pane -t "$session_name:$window_index.$pane_index" -T "$pane_title"
-	done < <(echo "$pane")
+	done <<< "$pane"
 }
 
 restore_state() {
 	local state="$1"
 	local _line_type client_session client_last_session
 
-	echo "$state" |
 	while IFS=$d read _line_type client_session client_last_session; do
 		tmux switch-client -t "$client_last_session"
 		tmux switch-client -t "$client_session"
-	done
+	done <<< "$state"
 }
 
 restore_grouped_session() {
 	local grouped_session_line="$1"
 	local _line_type grouped_session original_session _colon_alternate_window_index _colon_active_window_index
 
-	echo "$grouped_session_line" |
 	while IFS=$d read _line_type grouped_session original_session _colon_alternate_window_index _colon_active_window_index; do
 		TMUX='' tmux -S "$(tmux_socket)" new-session -d -s "$grouped_session" -t "$original_session"
-	done
+	done <<< "$grouped_session_line"
 }
 
 restore_active_and_alternate_windows_for_grouped_sessions() {
 	local grouped_session_line="$1"
 	local _line_type grouped_session original_session colon_alternate_window_index colon_active_window_index
 
-	echo "$grouped_session_line" |
 	while IFS=$d read _line_type grouped_session original_session colon_alternate_window_index colon_active_window_index; do
 		local alternate_window_index active_window_index
 		alternate_window_index="${colon_alternate_window_index#:}"
@@ -256,7 +253,7 @@ restore_active_and_alternate_windows_for_grouped_sessions() {
 		if [[ -n "$active_window_index" ]]; then
 			tmux switch-client -t "${grouped_session}:${active_window_index}"
 		fi
-	done
+	done <<< "$grouped_session_line"
 }
 
 never_ever_overwrite() {
