@@ -100,26 +100,26 @@ pane_content_files_restore_from_archive() {
 
 # path helpers
 
-resurrect_dir() {
-	if [[ -z "${_RESURRECT_DIR:-}" ]]; then
-		local path
-		path="$(get_tmux_option "$resurrect_dir_option" "")"
-		if [[ -n "${path}" ]]; then
-			# expands tilde, $HOME and $HOSTNAME if used in @resurrect-dir
-			path="${path//\~/$HOME}"
-			path="${path//\$HOME/$HOME}"
-			path="${path//\$HOSTNAME/$(hostname)}"
-		elif [[ -d "$HOME/.tmux/resurrect" ]]; then
-			path="$HOME/.tmux/resurrect"
-		else
-			path="${XDG_DATA_HOME:-"${HOME}/.local/share"}"/tmux/resurrect
-		fi
-		echo "$path"
+get_resurrect_dir_opt() {
+	local path
+	path="$(get_tmux_option "$resurrect_dir_option" "")"
+	if [[ -n "${path}" ]]; then
+		# expands tilde, $HOME and $HOSTNAME if used in @resurrect-dir
+		path="${path//\~/$HOME}"
+		path="${path//\$HOME/$HOME}"
+		path="${path//\$HOSTNAME/$(hostname)}"
+	elif [[ -d "$HOME/.tmux/resurrect" ]]; then
+		path="$HOME/.tmux/resurrect"
 	else
-		echo "$_RESURRECT_DIR"
+		path="${XDG_DATA_HOME:-"${HOME}/.local/share"}"/tmux/resurrect
 	fi
+	echo "${path}"
 }
-_RESURRECT_DIR="$(resurrect_dir)"
+
+resurrect_dir() {
+	[[ -n "${_RESURRECT_DIR+x}" ]] || _RESURRECT_DIR="$(get_resurrect_dir_opt)"
+	echo "${_RESURRECT_DIR}"
+}
 
 resurrect_file_path() {
 	if [[ -z "$_RESURRECT_FILE_PATH" ]]; then
