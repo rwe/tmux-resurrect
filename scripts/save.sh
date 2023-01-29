@@ -70,9 +70,9 @@ _save_command_strategy_file() {
 	local strategy_file="$CURRENT_DIR/../save_command_strategies/${save_command_strategy}.sh"
 	local default_strategy_file="$CURRENT_DIR/../save_command_strategies/${default_save_command_strategy}.sh"
 	if [[ -e "$strategy_file" ]]; then # strategy file exists?
-		echo "$strategy_file"
+		out "$strategy_file"
 	else
-		echo "$default_strategy_file"
+		out "$default_strategy_file"
 	fi
 }
 
@@ -167,7 +167,7 @@ get_grouped_sessions() {
 		grouped_session_names+=("${session_name}")
 	done
 	local IFS="$d"
-	echo "${grouped_session_names[*]}"
+	outln "${grouped_session_names[*]}"
 }
 
 is_session_grouped() {
@@ -263,7 +263,7 @@ dump_layout() {
 	local grouped_sessions_dump grouped_session_names=()
 	grouped_sessions_dump="$(dump_grouped_sessions)"
 	if [[ -n "$grouped_sessions_dump" ]]; then
-		echo "$grouped_sessions_dump"
+		outln "$grouped_sessions_dump"
 
 		local grouped_session_names_tsv
 		grouped_session_names_tsv="$(get_grouped_sessions <<< "$grouped_sessions_dump")"
