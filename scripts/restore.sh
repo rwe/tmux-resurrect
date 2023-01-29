@@ -334,35 +334,39 @@ restore_window_properties() {
 restore_all_pane_processes() {
 	restore_pane_processes_enabled || return 0
 
-	local session_name window_index pane_index colon_pane_current_path colon_pane_full_command
+	local _line_type session_name window_index _window_active _colon_window_flags pane_index _pane_title colon_pane_current_path _pane_active _pane_current_command colon_pane_full_command
 
-	awk 'BEGIN { FS="\t"; OFS="\t" } /^pane/ && $11 !~ "^:$" { print $2, $3, $6, $8, $11; }' |
-		while IFS=$d read session_name window_index pane_index colon_pane_current_path colon_pane_full_command; do
+	\grep '^pane' |
+		while IFS=$d read _line_type session_name window_index _window_active _colon_window_flags pane_index _pane_title colon_pane_current_path _pane_active _pane_current_command colon_pane_full_command; do
 			local pane_current_path_goal
 			pane_current_path_goal="${colon_pane_current_path#:}"
 
 			local pane_full_command_goal
 			pane_full_command_goal="${colon_pane_full_command#:}"
+			[[ -n "${pane_full_command_goal}" ]] || continue
 
 			restore_pane_process "$pane_full_command_goal" "$session_name" "$window_index" "$pane_index" "$pane_current_path_goal"
 		done
 }
 
 restore_active_pane_for_each_window() {
-	local session_name window_index pane_index
+	local _line_type session_name window_index _window_active _colon_window_flags pane_index pane_title _colon_pane_current_path pane_active _pane_current_command _colon_pane_full_command
 
-	awk 'BEGIN { FS="\t"; OFS="\t" } /^pane/ && $9 == 1 { print $2, $3, $6; }' |
-		while IFS=$d read session_name window_index pane_index; do
+	\grep '^pane' |
+		while IFS=$d read _line_type session_name window_index _window_active _colon_window_flags pane_index pane_title _colon_pane_current_path pane_active _pane_current_command _colon_pane_full_command; do
+			[[ "${pane_active}" == 1 ]] || continue
 			tmux switch-client -t "${session_name}:${window_index}"
 			tmux select-pane -t "$pane_index"
 		done
 }
 
 restore_zoomed_windows() {
-	local session_name window_index
+	local _line_type session_name window_index _window_active colon_window_flags _pane_index _pane_title _colon_pane_current_path pane_active _pane_current_command _colon_pane_full_command
 
-	awk 'BEGIN { FS="\t"; OFS="\t" } /^pane/ && $5 ~ /Z/ && $9 == 1 { print $2, $3; }' |
-		while IFS=$d read session_name window_index; do
+	\grep '^pane' |
+		while IFS=$d read _line_type session_name window_index _window_active colon_window_flags _pane_index _pane_title _colon_pane_current_path pane_active _pane_current_command _colon_pane_full_command; do
+			[[ "${colon_window_flags}" == *Z* ]] || continue
+			[[ "${pane_active}" == 1 ]] || continue
 			tmux resize-pane -t "${session_name}:${window_index}" -Z
 		done
 }
@@ -379,13 +383,25 @@ restore_grouped_sessions() {
 }
 
 restore_active_and_alternate_windows() {
-	local session_name _window_active window_index
+	# Collect the alternate and active windows for each session.
+	local alternate_window_targets=()
+	local active_window_targets=()
 
-	awk 'BEGIN { FS="\t"; OFS="\t" } /^window/ && $6 ~ /[*-]/ { print $2, $5, $3; }' |
-		sort -u |
-		while IFS=$d read session_name _window_active window_index; do
-			tmux switch-client -t "${session_name}:${window_index}"
-		done
+	local _line_type session_name window_index _colon_window_name _window_active colon_window_flags _window_layout _automatic_rename
+	while IFS=$d read _line_type session_name window_index _colon_window_name _window_active colon_window_flags _window_layout _automatic_rename; do
+		local target="${session_name}:${window_index}"
+		if [[ "$colon_window_flags" == *-* ]]; then
+			alternate_window_targets+=("${target}")
+		elif [[ "$colon_window_flags" == *\** ]]; then
+			active_window_targets+=("${target}")
+		fi
+	done < <(\grep '^window')
+
+	# Switch to each "alternate" window first, then each "active" window.
+	local target
+	for target in "${alternate_window_targets[@]}" "${active_window_targets[@]}"; do
+		tmux switch-client -t "${target}"
+	done
 }
 
 restore_active_and_alternate_sessions() {
