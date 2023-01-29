@@ -101,8 +101,8 @@ _process_on_the_restore_list() {
 _proc_matches_full_command() {
 	local pane_full_command="$1"
 	local match="$2"
-	if _proc_starts_with_tildae "$match"; then
-		match="$(remove_first_char "$match")"
+	if [[ "$match" == '~'* ]]; then
+		match="${match#'~'}"
 		# pattern matching the command makes sure `$match` string is somewhere in the command string
 		if [[ "$pane_full_command" == *"${match}"* ]]; then
 			return 0
@@ -130,9 +130,7 @@ _get_proc_restore_element() {
 _get_command_arguments() {
 	local pane_full_command="$1"
 	local match="$2"
-	if _proc_starts_with_tildae "$match"; then
-		match="$(remove_first_char "$match")"
-	fi
+	match="${match#'~'}"  # remove leading tilde, if any.
 	# Strip out anything leading up to the (first) match.
 	pane_full_command="${pane_full_command#*"${match}"}"
 	# Strip out everything up until the next space.
@@ -168,10 +166,6 @@ _restore_list() {
 	else
 		echo "$default_processes $user_processes"
 	fi
-}
-
-_proc_starts_with_tildae() {
-	[[ "$1" == '~'* ]]
 }
 
 _get_inline_strategy() {
