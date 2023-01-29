@@ -110,11 +110,11 @@ _proc_matches_full_command() {
 }
 
 _get_proc_match_element() {
-	echo "${1%"${inline_strategy_token}"*}"
+	out "${1%"${inline_strategy_token}"*}"
 }
 
 _get_proc_restore_element() {
-	echo "${1##*"${inline_strategy_token}"}"
+	out "${1##*"${inline_strategy_token}"}"
 }
 
 # given full command: 'ruby /Users/john/bin/my_program arg1 arg2'
@@ -128,7 +128,7 @@ _get_command_arguments() {
 	pane_full_command="${pane_full_command#*"${match}"}"
 	# Strip out everything up until the next space.
 	pane_full_command="${pane_full_command#* }"
-	echo "${pane_full_command}"
+	out "${pane_full_command}"
 }
 
 _get_proc_restore_command() {
@@ -141,9 +141,9 @@ _get_proc_restore_command() {
 		# replaces "%" with command arguments
 		local command_arguments
 		command_arguments="$(_get_command_arguments "$pane_full_command" "$match")"
-		echo "${restore_element/ "${inline_strategy_arguments_token}"/ ${command_arguments}}"
+		out "${restore_element/ "${inline_strategy_arguments_token}"/ ${command_arguments}}"
 	else
-		echo "$restore_element"
+		out "$restore_element"
 	fi
 }
 
@@ -155,9 +155,9 @@ _restore_list() {
 	default_processes="$(get_tmux_option "$default_proc_list_option" "$default_proc_list")"
 	if [[ -z "$user_processes" ]]; then
 		# user didn't define any processes
-		echo "$default_processes"
+		outln "$default_processes"
 	else
-		echo "$default_processes $user_processes"
+		outln "$default_processes $user_processes"
 	fi
 }
 
@@ -203,7 +203,7 @@ _get_command_strategy() {
 
 _just_command() {
 	# Remove everything after first space.
-	echo "${1%% *}"
+	out "${1%% *}"
 }
 
 _get_strategy_file() {
@@ -212,5 +212,5 @@ _get_strategy_file() {
 	strategy="$(_get_command_strategy "$pane_full_command")"
 	local command
 	command="$(_just_command "$pane_full_command")"
-	echo "$CURRENT_DIR/../strategies/${command}_${strategy}.sh"
+	out "$CURRENT_DIR/../strategies/${command}_${strategy}.sh"
 }
