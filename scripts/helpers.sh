@@ -7,7 +7,6 @@ source "${CURRENT_DIR}/variables.sh"
 SUPPORTED_VERSION="1.9"
 RESURRECT_FILE_PREFIX="tmux_resurrect"
 RESURRECT_FILE_EXTENSION="txt"
-_RESURRECT_FILE_PATH=""
 
 d=$'\t'
 
@@ -122,7 +121,7 @@ resurrect_dir() {
 }
 
 resurrect_file_path() {
-	if [[ -z "$_RESURRECT_FILE_PATH" ]]; then
+	if [[ -z "${_RESURRECT_FILE_PATH:-}" ]]; then
 		local timestamp
 		timestamp="$(date +"%Y%m%dT%H%M%S")"
 		echo "$(resurrect_dir)/${RESURRECT_FILE_PREFIX}_${timestamp}.${RESURRECT_FILE_EXTENSION}"
