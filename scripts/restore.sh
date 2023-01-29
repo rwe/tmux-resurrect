@@ -53,7 +53,7 @@ is_pane_registered_as_existing() {
 	local window_number="$2"
 	local pane_index="$3"
 	local pane_custom_id="${session_name}:${window_number}:${pane_index}"
-	[[ "$EXISTING_PANES_VAR" =~ "$pane_custom_id" ]]
+	[[ "$EXISTING_PANES_VAR" == *"$pane_custom_id"* ]]
 }
 
 restore_from_scratch_true() {
