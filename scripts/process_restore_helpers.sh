@@ -103,13 +103,13 @@ _proc_matches_full_command() {
 	local match="$2"
 	if _proc_starts_with_tildae "$match"; then
 		match="$(remove_first_char "$match")"
-		# regex matching the command makes sure `$match` string is somewhere in the command string
-		if [[ "$pane_full_command" =~ ("$match") ]]; then
+		# pattern matching the command makes sure `$match` string is somewhere in the command string
+		if [[ "$pane_full_command" == *"${match}"* ]]; then
 			return 0
 		fi
 	else
 		# regex matching the command makes sure process is a "word"
-		if [[ "$pane_full_command" =~ (^"${match}" ) ]] || [[ "$pane_full_command" =~ (^"${match}"$) ]]; then
+		if [[ "$pane_full_command" == "${match} "* ]] || [[ "$pane_full_command" == "${match}" ]]; then
 			return 0
 		fi
 	fi
@@ -146,7 +146,7 @@ _get_proc_restore_command() {
 	local match="$3"
 	local restore_element
 	restore_element="$(_get_proc_restore_element "$proc")"
-	if [[ "$restore_element" =~ " ${inline_strategy_arguments_token}" ]]; then
+	if [[ "$restore_element" == *" ${inline_strategy_arguments_token}"* ]]; then
 		# replaces "%" with command arguments
 		local command_arguments
 		command_arguments="$(_get_command_arguments "$pane_full_command" "$match")"
@@ -171,7 +171,7 @@ _restore_list() {
 }
 
 _proc_starts_with_tildae() {
-	[[ "$1" =~ (^~) ]]
+	[[ "$1" == '~'* ]]
 }
 
 _get_inline_strategy() {
@@ -181,7 +181,7 @@ _get_inline_strategy() {
 	local proc
 	local match
 	for proc in "$@"; do
-		if [[ "$proc" =~ "$inline_strategy_token" ]]; then
+		if [[ "$proc" == *"$inline_strategy_token"* ]]; then
 			match="$(_get_proc_match_element "$proc")"
 			if _proc_matches_full_command "$pane_full_command" "$match"; then
 				_get_proc_restore_command "$pane_full_command" "$proc" "$match"
