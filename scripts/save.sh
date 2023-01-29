@@ -5,77 +5,61 @@ CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$CURRENT_DIR/helpers.sh"
 source "$CURRENT_DIR/spinner_helpers.sh"
 
-delimiter=$'\t'
-
 # if "quiet" script produces no output
 SCRIPT_OUTPUT="$1"
 
+_grouped_sessions_tmux_fields=(
+	'#{session_grouped}'
+	'#{session_group}'
+	'#{session_id}'
+	'#{session_name}'
+)
+
 grouped_sessions_tmux_format() {
-	local format
-	format+="#{session_grouped}"
-	format+="${delimiter}"
-	format+="#{session_group}"
-	format+="${delimiter}"
-	format+="#{session_id}"
-	format+="${delimiter}"
-	format+="#{session_name}"
-	echo "$format"
+	tmr:tmux-fields "${_grouped_sessions_tmux_fields[@]}"
 }
+
+_pane_tmux_fields=(
+	'pane'
+	'#{session_name}'
+	'#{window_index}'
+	'#{window_active}'
+	':#{window_flags}'
+	'#{pane_index}'
+	'#{pane_title}'
+	':#{pane_current_path}'
+	'#{pane_active}'
+	'#{pane_current_command}'
+	'#{pane_pid}'
+	'#{history_size}'
+)
 
 pane_tmux_format() {
-	local format
-	format+="pane"
-	format+="${delimiter}"
-	format+="#{session_name}"
-	format+="${delimiter}"
-	format+="#{window_index}"
-	format+="${delimiter}"
-	format+="#{window_active}"
-	format+="${delimiter}"
-	format+=":#{window_flags}"
-	format+="${delimiter}"
-	format+="#{pane_index}"
-	format+="${delimiter}"
-	format+="#{pane_title}"
-	format+="${delimiter}"
-	format+=":#{pane_current_path}"
-	format+="${delimiter}"
-	format+="#{pane_active}"
-	format+="${delimiter}"
-	format+="#{pane_current_command}"
-	format+="${delimiter}"
-	format+="#{pane_pid}"
-	format+="${delimiter}"
-	format+="#{history_size}"
-	echo "$format"
+	tmr:tmux-fields "${_pane_tmux_fields[@]}"
 }
+
+_window_tmux_fields=(
+	'window'
+	'#{session_name}'
+	'#{window_index}'
+	':#{window_name}'
+	'#{window_active}'
+	':#{window_flags}'
+	'#{window_layout}'
+)
 
 window_tmux_format() {
-	local format
-	format+="window"
-	format+="${delimiter}"
-	format+="#{session_name}"
-	format+="${delimiter}"
-	format+="#{window_index}"
-	format+="${delimiter}"
-	format+=":#{window_name}"
-	format+="${delimiter}"
-	format+="#{window_active}"
-	format+="${delimiter}"
-	format+=":#{window_flags}"
-	format+="${delimiter}"
-	format+="#{window_layout}"
-	echo "$format"
+	tmr:tmux-fields "${_window_tmux_fields[@]}"
 }
 
+_state_tmux_fields=(
+	'state'
+	'#{client_session}'
+	'#{client_last_session}'
+)
+
 state_tmux_format() {
-	local format
-	format+="state"
-	format+="${delimiter}"
-	format+="#{client_session}"
-	format+="${delimiter}"
-	format+="#{client_last_session}"
-	echo "$format"
+	tmr:tmux-fields "${_state_tmux_fields[@]}"
 }
 
 dump_panes_raw() {
@@ -174,7 +158,14 @@ dump_grouped_sessions() {
 				local alternate_window_index active_window_index
 				active_window_index="$(get_active_window_index "$session_name")"
 				alternate_window_index="$(get_alternate_window_index "$session_name")"
-				echo "grouped_session${d}${session_name}${d}${original_session}${d}:${alternate_window_index}${d}:${active_window_index}"
+				local fields=(
+					'grouped_session'
+					"${session_name}"
+					"${original_session}"
+					":${alternate_window_index}"
+					":${active_window_index}"
+				)
+				tmr:fields "${fields[@]}"
 			fi
 		done
 }
@@ -200,7 +191,20 @@ dump_panes() {
 			local full_command
 			full_command="$(pane_full_command "$pane_pid")"
 			dir="${dir// /\\ }" # escape all spaces in directory path
-			echo "${line_type}${d}${session_name}${d}${window_number}${d}${window_active}${d}${window_flags}${d}${pane_index}${d}${pane_title}${d}${dir}${d}${pane_active}${d}${pane_command}${d}:${full_command}"
+			local fields=(
+				"${line_type}"
+				"${session_name}"
+				"${window_number}"
+				"${window_active}"
+				"${window_flags}"
+				"${pane_index}"
+				"${pane_title}"
+				"${dir}"
+				"${pane_active}"
+				"${pane_command}"
+				":${full_command}"
+			)
+			tmr:fields "${fields[@]}"
 		done
 }
 
@@ -219,7 +223,17 @@ dump_windows() {
 			# If the option was unset, use ":" as a placeholder.
 			: "${automatic_rename:=:}"
 
-			echo "${line_type}${d}${session_name}${d}${window_index}${d}${window_name}${d}${window_active}${d}${window_flags}${d}${window_layout}${d}${automatic_rename}"
+			local fields=(
+				"${line_type}"
+				"${session_name}"
+				"${window_index}"
+				"${window_name}"
+				"${window_active}"
+				"${window_flags}"
+				"${window_layout}"
+				"${automatic_rename}"
+			)
+			tmr:fields "${fields[@]}"
 		done
 }
 
