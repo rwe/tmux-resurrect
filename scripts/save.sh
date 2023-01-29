@@ -10,7 +10,7 @@ delimiter=$'\t'
 # if "quiet" script produces no output
 SCRIPT_OUTPUT="$1"
 
-grouped_sessions_format() {
+grouped_sessions_tmux_format() {
 	local format
 	format+="#{session_grouped}"
 	format+="${delimiter}"
@@ -22,7 +22,7 @@ grouped_sessions_format() {
 	echo "$format"
 }
 
-pane_format() {
+pane_tmux_format() {
 	local format
 	format+="pane"
 	format+="${delimiter}"
@@ -50,7 +50,7 @@ pane_format() {
 	echo "$format"
 }
 
-window_format() {
+window_tmux_format() {
 	local format
 	format+="window"
 	format+="${delimiter}"
@@ -68,7 +68,7 @@ window_format() {
 	echo "$format"
 }
 
-state_format() {
+state_tmux_format() {
 	local format
 	format+="state"
 	format+="${delimiter}"
@@ -79,11 +79,11 @@ state_format() {
 }
 
 dump_panes_raw() {
-	tmux list-panes -a -F "$(pane_format)"
+	tmux list-panes -a -F "$(pane_tmux_format)"
 }
 
 dump_windows_raw(){
-	tmux list-windows -a -F "$(window_format)"
+	tmux list-windows -a -F "$(window_tmux_format)"
 }
 
 toggle_window_zoom() {
@@ -160,7 +160,7 @@ dump_grouped_sessions() {
 	local original_session
 	local session_group _session_id session_name
 
-	tmux list-sessions -F "$(grouped_sessions_format)" |
+	tmux list-sessions -F "$(grouped_sessions_tmux_format)" |
 		grep "^1" |
 		cut -c 3- |
 		sort |
@@ -224,7 +224,7 @@ dump_windows() {
 }
 
 dump_state() {
-	tmux display-message -p "$(state_format)"
+	tmux display-message -p "$(state_tmux_format)"
 }
 
 dump_pane_contents() {
