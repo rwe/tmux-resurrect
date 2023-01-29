@@ -263,7 +263,7 @@ detect_if_restoring_from_scratch() {
 		return
 	fi
 	local total_number_of_panes
-	total_number_of_panes="$(tmux list-panes -a | wc -l | sed 's/ //g')"
+	total_number_of_panes="$(tmux list-panes -a | \grep -c .)"
 	if [ "$total_number_of_panes" -eq 1 ]; then
 		restore_from_scratch_true
 	fi
