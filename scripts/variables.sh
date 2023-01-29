@@ -3,6 +3,12 @@
 # This file is sourced, so disable "unused variable" warning.
 # shellcheck disable=SC2034
 
+# persisted state location.
+# If the directory "$HOME/.tmux/resurrect" exists, it's used by default.
+# Otherwise the default is "$XDG_DATA_HOME/tmux/resurrect",
+# where XDG_DATA_HOME defaults to ~/.local/share.
+resurrect_dir_option="@resurrect-dir"
+
 # key bindings
 default_save_key="C-s"
 save_option="@resurrect-save"

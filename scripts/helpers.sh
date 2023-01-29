@@ -9,7 +9,6 @@ if [ -d "$HOME/.tmux/resurrect" ]; then
 else
 	default_resurrect_dir="${XDG_DATA_HOME:-"${HOME}/.local/share"}"/tmux/resurrect
 fi
-resurrect_dir_option="@resurrect-dir"
 
 SUPPORTED_VERSION="1.9"
 RESURRECT_FILE_PREFIX="tmux_resurrect"
