@@ -120,16 +120,16 @@ resurrect_dir() {
 	echo "${_RESURRECT_DIR}"
 }
 
-resurrect_file_path() {
-	if [[ -z "${_RESURRECT_FILE_PATH:-}" ]]; then
-		local timestamp
-		timestamp="$(date +"%Y%m%dT%H%M%S")"
-		echo "$(resurrect_dir)/${RESURRECT_FILE_PREFIX}_${timestamp}.${RESURRECT_FILE_EXTENSION}"
-	else
-		echo "$_RESURRECT_FILE_PATH"
-	fi
+new_resurrect_file_path() {
+	local timestamp
+	timestamp="$(date '+%Y%m%dT%H%M%S')"
+	echo "$(resurrect_dir)/${RESURRECT_FILE_PREFIX}_${timestamp}.${RESURRECT_FILE_EXTENSION}"
 }
-_RESURRECT_FILE_PATH="$(resurrect_file_path)"
+
+resurrect_file_path() {
+	[[ -n "${_RESURRECT_FILE_PATH+x}" ]] || _RESURRECT_FILE_PATH="$(new_resurrect_file_path)"
+	echo "${_RESURRECT_FILE_PATH}"
+}
 
 last_resurrect_file() {
 	echo "$(resurrect_dir)/last"
