@@ -199,6 +199,20 @@ new_pane() {
 	tmux resize-pane -t "${session_name}:${window_index}" -U 999
 }
 
+replace_pane() {
+	local session_name="$1"
+	local window_index="$2"
+	local pane_index="$3"
+	local pane_current_path_goal="$4"
+
+	# overwrite the pane
+	# happens only for the first pane if it's the only registered pane for the whole tmux server
+	local orig_pane_id
+	orig_pane_id="$(tmux display-message -p -F '#{pane_id}' -t "$session_name:$window_index")"
+	new_pane "$session_name" "$window_index" "$pane_index" "$pane_current_path_goal"
+	tmux kill-pane -t "$orig_pane_id"
+}
+
 restore_pane() {
 	local _line_type session_name window_index _window_active _colon_window_flags pane_index pane_title colon_pane_current_path _pane_active _pane_current_command colon_pane_full_command
 	IFS=$d read _line_type session_name window_index _window_active _colon_window_flags pane_index pane_title colon_pane_current_path _pane_active _pane_current_command colon_pane_full_command || return $?
@@ -217,10 +231,7 @@ restore_pane() {
 		if is_restoring_from_scratch; then
 			# overwrite the pane
 			# happens only for the first pane if it's the only registered pane for the whole tmux server
-			local pane_id
-			pane_id="$(tmux display-message -p -F '#{pane_id}' -t "$session_name:$window_index")"
-			new_pane "$session_name" "$window_index" "$pane_index" "$pane_current_path_goal"
-			tmux kill-pane -t "$pane_id"
+			replace_pane "$session_name" "$window_index" "$pane_index" "$pane_current_path_goal"
 		else
 			# Pane exists, no need to create it!
 			# Pane existence is registered. Later, its process also won't be restored.
