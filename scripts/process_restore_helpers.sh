@@ -7,11 +7,7 @@ source "$CURRENT_DIR/helpers.sh"
 restore_pane_processes_enabled() {
 	local restore_processes
 	restore_processes="$(get_tmux_option "$restore_processes_option" "$restore_processes")"
-	if [[ "$restore_processes" == false ]]; then
-		return 1
-	else
-		return 0
-	fi
+	[[ "$restore_processes" != false ]]
 }
 
 restore_pane_process() {
@@ -76,11 +72,7 @@ _process_should_be_restored() {
 _restore_all_processes() {
 	local restore_processes
 	restore_processes="$(get_tmux_option "$restore_processes_option" "$restore_processes")"
-	if [[ "$restore_processes" == ':all:' ]]; then
-		return 0
-	else
-		return 1
-	fi
+	[[ "$restore_processes" == ':all:' ]]
 }
 
 _process_on_the_restore_list() {
@@ -104,16 +96,11 @@ _proc_matches_full_command() {
 	if [[ "$match" == '~'* ]]; then
 		match="${match#'~'}"
 		# pattern matching the command makes sure `$match` string is somewhere in the command string
-		if [[ "$pane_full_command" == *"${match}"* ]]; then
-			return 0
-		fi
+		[[ "$pane_full_command" == *"${match}"* ]]
 	else
 		# regex matching the command makes sure process is a "word"
-		if [[ "$pane_full_command" == "${match} "* ]] || [[ "$pane_full_command" == "${match}" ]]; then
-			return 0
-		fi
+		[[ "$pane_full_command" == "${match} "* ]] || [[ "$pane_full_command" == "${match}" ]]
 	fi
-	return 1
 }
 
 _get_proc_match_element() {
