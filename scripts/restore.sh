@@ -53,7 +53,7 @@ register_existing_pane() {
 	local session_name="$1"
 	local window_index="$2"
 	local pane_index="$3"
-	local pane_custom_id="${session_name}:${window_index}:${pane_index}"
+	local pane_custom_id="${session_name}:${window_index}.${pane_index}"
 	local delimiter=$'\t'
 	EXISTING_PANES_VAR="${EXISTING_PANES_VAR}${delimiter}${pane_custom_id}"
 }
@@ -62,7 +62,7 @@ is_pane_registered_as_existing() {
 	local session_name="$1"
 	local window_index="$2"
 	local pane_index="$3"
-	local pane_custom_id="${session_name}:${window_index}:${pane_index}"
+	local pane_custom_id="${session_name}:${window_index}.${pane_index}"
 	[[ "$EXISTING_PANES_VAR" == *"$pane_custom_id"* ]]
 }
 
