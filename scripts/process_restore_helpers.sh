@@ -13,12 +13,12 @@ restore_pane_processes_enabled() {
 restore_pane_process() {
 	local pane_full_command="$1"
 	local session_name="$2"
-	local window_number="$3"
+	local window_index="$3"
 	local pane_index="$4"
 	local dir="$5"
 	local command
-	if _process_should_be_restored "$pane_full_command" "$session_name" "$window_number" "$pane_index"; then
-		tmux switch-client -t "${session_name}:${window_number}"
+	if _process_should_be_restored "$pane_full_command" "$session_name" "$window_index" "$pane_index"; then
+		tmux switch-client -t "${session_name}:${window_index}"
 		tmux select-pane -t "$pane_index"
 
 		local inline_strategy
@@ -42,7 +42,7 @@ restore_pane_process() {
 			# just invoke the raw command
 			command="$pane_full_command"
 		fi
-		tmux send-keys -t "${session_name}:${window_number}.${pane_index}" "$command" 'C-m'
+		tmux send-keys -t "${session_name}:${window_index}.${pane_index}" "$command" 'C-m'
 	fi
 }
 
@@ -51,13 +51,13 @@ restore_pane_process() {
 _process_should_be_restored() {
 	local pane_full_command="$1"
 	local session_name="$2"
-	local window_number="$3"
+	local window_index="$3"
 	local pane_index="$4"
-	if is_pane_registered_as_existing "$session_name" "$window_number" "$pane_index"; then
+	if is_pane_registered_as_existing "$session_name" "$window_index" "$pane_index"; then
 		# Scenario where pane existed before restoration, so we're not
 		# restoring the proces either.
 		return 1
-	elif ! pane_exists "$session_name" "$window_number" "$pane_index"; then
+	elif ! pane_exists "$session_name" "$window_index" "$pane_index"; then
 		# pane number limit exceeded, pane does not exist
 		return 1
 	elif _restore_all_processes; then
