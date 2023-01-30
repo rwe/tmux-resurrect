@@ -15,13 +15,13 @@ restore_pane_processes_enabled() {
 }
 
 restore_pane_process() {
-	local pane_full_command_goal="$1"
-	local session_name="$2"
-	local window_index="$3"
-	local pane_index="$4"
-	local pane_current_path_goal="$5"
+	local session_name="$1"
+	local window_index="$2"
+	local pane_index="$3"
+	local pane_current_path_goal="$4"
+	local pane_full_command_goal="$5"
 	local pane_full_command
-	if _process_should_be_restored "$pane_full_command_goal" "$session_name" "$window_index" "$pane_index"; then
+	if _process_should_be_restored "$session_name" "$window_index" "$pane_index" "$pane_current_path_goal" "$pane_full_command_goal"; then
 		tmux switch-client -t "${session_name}:${window_index}"
 		tmux select-pane -t "$pane_index"
 
@@ -55,10 +55,11 @@ restore_pane_process() {
 # private functions below
 
 _process_should_be_restored() {
-	local pane_full_command_goal="$1"
-	local session_name="$2"
-	local window_index="$3"
-	local pane_index="$4"
+	local session_name="$1"
+	local window_index="$2"
+	local pane_index="$3"
+	local _pane_current_path_goal="$4"
+	local pane_full_command_goal="$5"
 	if is_pane_registered_as_existing "$session_name" "$window_index" "$pane_index"; then
 		# Scenario where pane existed before restoration, so we're not
 		# restoring the proces either.

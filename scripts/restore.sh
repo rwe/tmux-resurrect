@@ -351,7 +351,7 @@ restore_one_pane_process() {
 	pane_full_command_goal="${colon_pane_full_command#:}"
 	[[ -n "${pane_full_command_goal}" ]] || return 0
 
-	restore_pane_process "$pane_full_command_goal" "$session_name" "$window_index" "$pane_index" "$pane_current_path_goal"
+	restore_pane_process "$session_name" "$window_index" "$pane_index" "$pane_current_path_goal" "$pane_full_command_goal"
 }
 
 restore_all_pane_processes() {
