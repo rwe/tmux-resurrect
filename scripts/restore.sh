@@ -133,9 +133,10 @@ tmux_default_command() {
 }
 
 pane_creation_command() {
+	local pane_id="$1"
 	# Note that the command itself is a literal shell command, and so is
 	# intentionally spliced with '%s' rather than '%q'.
-	printf 'cat %q; exec %s' "$(pane_contents_file 'restore' "${1}:${2}.${3}")" "$(tmux_default_command)"
+	printf 'cat %q; exec %s' "$(pane_contents_file 'restore' "$pane_id")" "$(tmux_default_command)"
 }
 
 new_window() {
@@ -146,7 +147,7 @@ new_window() {
 	local pane_id="${session_name}:${window_index}.${pane_index}"
 	if is_restoring_pane_contents && pane_contents_file_exists "$pane_id"; then
 		local pane_creation_command
-		pane_creation_command="$(pane_creation_command "$session_name" "$window_index" "$pane_index")"
+		pane_creation_command="$(pane_creation_command "$pane_id")"
 		tmux new-window -d -t "${session_name}:${window_index}" -c "$pane_current_path_goal" "$pane_creation_command"
 	else
 		tmux new-window -d -t "${session_name}:${window_index}" -c "$pane_current_path_goal"
@@ -161,7 +162,7 @@ new_session() {
 	local pane_id="${session_name}:${window_index}.${pane_index}"
 	if is_restoring_pane_contents && pane_contents_file_exists "$pane_id"; then
 		local pane_creation_command
-		pane_creation_command="$(pane_creation_command "$session_name" "$window_index" "$pane_index")"
+		pane_creation_command="$(pane_creation_command "$pane_id")"
 		TMUX='' tmux -S "$(tmux_socket)" new-session -d -s "$session_name" -c "$pane_current_path_goal" "$pane_creation_command"
 	else
 		TMUX='' tmux -S "$(tmux_socket)" new-session -d -s "$session_name" -c "$pane_current_path_goal"
@@ -182,7 +183,7 @@ new_pane() {
 	local pane_id="${session_name}:${window_index}.${pane_index}"
 	if is_restoring_pane_contents && pane_contents_file_exists "$pane_id"; then
 		local pane_creation_command
-		pane_creation_command="$(pane_creation_command "$session_name" "$window_index" "$pane_index")"
+		pane_creation_command="$(pane_creation_command "$pane_id")"
 		tmux split-window -t "${session_name}:${window_index}" -c "$pane_current_path_goal" "$pane_creation_command"
 	else
 		tmux split-window -t "${session_name}:${window_index}" -c "$pane_current_path_goal"
