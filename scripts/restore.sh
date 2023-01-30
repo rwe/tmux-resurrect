@@ -227,25 +227,33 @@ restore_pane() {
 	if [[ "$session_name" == '0' ]]; then
 		restored_session_0_true
 	fi
-	if pane_exists "$session_name" "$window_index" "$pane_index"; then
+
+	local pane_locator=("$session_name" "$window_index" "$pane_index")
+
+	local pane_id
+	pane_id="$(custom_pane_id "${pane_locator[@]}")"
+
+	local pane_args=("${pane_locator[@]}" "$pane_current_path_goal")
+
+	if pane_exists "${pane_locator[@]}"; then
 		if is_restoring_from_scratch; then
 			# overwrite the pane
 			# happens only for the first pane if it's the only registered pane for the whole tmux server
-			replace_pane "$session_name" "$window_index" "$pane_index" "$pane_current_path_goal"
+			replace_pane "${pane_args[@]}"
 		else
 			# Pane exists, no need to create it!
 			# Pane existence is registered. Later, its process also won't be restored.
-			register_existing_pane "$session_name" "$window_index" "$pane_index"
+			register_existing_pane "${pane_args[@]}"
 		fi
 	elif window_exists "$session_name" "$window_index"; then
-		new_pane "$session_name" "$window_index" "$pane_index" "$pane_current_path_goal"
+		new_pane "${pane_args[@]}"
 	elif session_exists "$session_name"; then
-		new_window "$session_name" "$window_index" "$pane_index" "$pane_current_path_goal"
+		new_window "${pane_args[@]}"
 	else
-		new_session "$session_name" "$window_index" "$pane_index" "$pane_current_path_goal"
+		new_session "${pane_args[@]}"
 	fi
 	# set pane title
-	tmux select-pane -t "$session_name:$window_index.$pane_index" -T "$pane_title"
+	tmux select-pane -t "$pane_id" -T "$pane_title"
 }
 
 restore_active_and_alternate_session_state() {
