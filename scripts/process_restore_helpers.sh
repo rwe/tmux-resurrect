@@ -21,35 +21,37 @@ restore_pane_process() {
 	local pane_current_path_goal="$4"
 	local pane_full_command_goal="$5"
 	local pane_full_command
-	if _process_should_be_restored "$session_name" "$window_index" "$pane_index" "$pane_current_path_goal" "$pane_full_command_goal"; then
-		tmux switch-client -t "${session_name}:${window_index}"
-		tmux select-pane -t "$pane_index"
 
-		local inline_strategy
-		inline_strategy="$(_get_inline_strategy "$pane_full_command_goal")" # might not be defined
-		if [[ -n "$inline_strategy" ]]; then
-			# inline strategy exists
-			# check for additional "expansion" of inline strategy, e.g. `vim` to `vim -S`
-			if _strategy_exists "$inline_strategy"; then
-				local strategy_file
-				strategy_file="$(_get_strategy_file "$inline_strategy")"
-				pane_full_command="$("$strategy_file" "$pane_full_command_goal" "$pane_current_path_goal")"
-			else
-				pane_full_command="$inline_strategy"
-			fi
-		elif _strategy_exists "$pane_full_command_goal"; then
+	_process_should_be_restored "$@" || return 0
+
+	tmux switch-client -t "${session_name}:${window_index}"
+	tmux select-pane -t "$pane_index"
+
+	local inline_strategy
+	inline_strategy="$(_get_inline_strategy "$pane_full_command_goal")" # might not be defined
+
+	if [[ -n "$inline_strategy" ]]; then
+		# inline strategy exists
+		# check for additional "expansion" of inline strategy, e.g. `vim` to `vim -S`
+		if _strategy_exists "$inline_strategy"; then
 			local strategy_file
-			strategy_file="$(_get_strategy_file "$pane_full_command_goal")"
+			strategy_file="$(_get_strategy_file "$inline_strategy")"
 			pane_full_command="$("$strategy_file" "$pane_full_command_goal" "$pane_current_path_goal")"
 		else
-			# just invoke the raw command
-			pane_full_command="$pane_full_command_goal"
+			pane_full_command="$inline_strategy"
 		fi
-		local pane_id
-		pane_id="$(custom_pane_id "$session_name" "$window_index" "$pane_index")"
-
-		tmux send-keys -t "${pane_id}" "$pane_full_command" 'C-m'
+	elif _strategy_exists "$pane_full_command_goal"; then
+		local strategy_file
+		strategy_file="$(_get_strategy_file "$pane_full_command_goal")"
+		pane_full_command="$("$strategy_file" "$pane_full_command_goal" "$pane_current_path_goal")"
+	else
+		# just invoke the raw command
+		pane_full_command="$pane_full_command_goal"
 	fi
+	local pane_id
+	pane_id="$(custom_pane_id "$session_name" "$window_index" "$pane_index")"
+
+	tmux send-keys -t "${pane_id}" "$pane_full_command" 'C-m'
 }
 
 # private functions below
