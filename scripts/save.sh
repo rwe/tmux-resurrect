@@ -164,10 +164,11 @@ dump_grouped_sessions() {
 fetch_and_dump_grouped_sessions(){
 	local grouped_sessions_dump
 	grouped_sessions_dump="$(dump_grouped_sessions)"
+
+	[[ -n "$grouped_sessions_dump" ]] || return 0
+	echo "$grouped_sessions_dump"
+
 	get_grouped_sessions "$grouped_sessions_dump"
-	if [[ -n "$grouped_sessions_dump" ]]; then
-		echo "$grouped_sessions_dump"
-	fi
 }
 
 get_grouped_sessions() {
