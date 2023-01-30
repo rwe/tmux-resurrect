@@ -33,11 +33,7 @@ display_message() {
 
 	# display_duration defaults to 5 seconds, if not passed as an argument
 	local display_duration
-	if [[ "$#" -eq 2 ]]; then
-		display_duration="$2"
-	else
-		display_duration="5000"
-	fi
+	display_duration="${2:-5000}"
 
 	# saves user-set 'display-time' option
 	local saved_display_time
