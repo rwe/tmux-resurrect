@@ -33,15 +33,14 @@ restore_pane_process() {
 			if _strategy_exists "$inline_strategy"; then
 				local strategy_file
 				strategy_file="$(_get_strategy_file "$inline_strategy")"
-				inline_strategy="$("$strategy_file" "$pane_full_command_goal" "$pane_current_path_goal")"
+				pane_full_command="$("$strategy_file" "$pane_full_command_goal" "$pane_current_path_goal")"
+			else
+				pane_full_command="$inline_strategy"
 			fi
-			pane_full_command="$inline_strategy"
 		elif _strategy_exists "$pane_full_command_goal"; then
 			local strategy_file
 			strategy_file="$(_get_strategy_file "$pane_full_command_goal")"
-			local strategy_command
-			strategy_command="$("$strategy_file" "$pane_full_command_goal" "$pane_current_path_goal")"
-			pane_full_command="$strategy_command"
+			pane_full_command="$("$strategy_file" "$pane_full_command_goal" "$pane_current_path_goal")"
 		else
 			# just invoke the raw command
 			pane_full_command="$pane_full_command_goal"
