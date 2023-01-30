@@ -14,18 +14,11 @@ restore_pane_processes_enabled() {
 	[[ "$restore_processes" != false ]]
 }
 
-restore_pane_process() {
-	local session_name="$1"
-	local window_index="$2"
-	local pane_index="$3"
-	local pane_current_path_goal="$4"
-	local pane_full_command_goal="$5"
+get_pane_restoration_command() {
+	local pane_full_command_goal="$1"
+	local pane_current_path_goal="$2"
+
 	local pane_full_command
-
-	_process_should_be_restored "$@" || return 0
-
-	tmux switch-client -t "${session_name}:${window_index}"
-	tmux select-pane -t "$pane_index"
 
 	local inline_strategy
 	inline_strategy="$(_get_inline_strategy "$pane_full_command_goal")" # might not be defined
@@ -48,6 +41,26 @@ restore_pane_process() {
 		# just invoke the raw command
 		pane_full_command="$pane_full_command_goal"
 	fi
+
+	out "$pane_full_command"
+}
+
+restore_pane_process() {
+	local session_name="$1"
+	local window_index="$2"
+	local pane_index="$3"
+	local pane_current_path_goal="$4"
+	local pane_full_command_goal="$5"
+
+	_process_should_be_restored "$@" || return 0
+
+	tmux switch-client -t "${session_name}:${window_index}"
+	tmux select-pane -t "$pane_index"
+
+	local pane_full_command
+	pane_full_command="$(get_pane_restoration_command "$pane_full_command_goal" "$pane_current_path_goal")" || return 0
+	[[ -n "${pane_full_command}" ]] || return 0
+
 	local pane_id
 	pane_id="$(custom_pane_id "$session_name" "$window_index" "$pane_index")"
 
