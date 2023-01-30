@@ -232,6 +232,13 @@ pane_contents_archive_file() {
 	out '/pane_contents.tar.gz'
 }
 
+custom_pane_id() {
+	local session_name="$1"
+	local window_index="$2"
+	local pane_index="$3"
+	out "${session_name}:${window_index}.${pane_index}"
+}
+
 execute_hook() {
 	local kind="$1"
 	shift

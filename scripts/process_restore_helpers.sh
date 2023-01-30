@@ -45,7 +45,10 @@ restore_pane_process() {
 			# just invoke the raw command
 			pane_full_command="$pane_full_command_goal"
 		fi
-		tmux send-keys -t "${session_name}:${window_index}.${pane_index}" "$pane_full_command" 'C-m'
+		local pane_id
+		pane_id="$(custom_pane_id "$session_name" "$window_index" "$pane_index")"
+
+		tmux send-keys -t "${pane_id}" "$pane_full_command" 'C-m'
 	fi
 }
 

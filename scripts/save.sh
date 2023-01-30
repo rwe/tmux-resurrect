@@ -289,7 +289,9 @@ dump_pane_contents() {
 
 	local _line_type session_name window_index _window_active _colon_window_flags pane_index _pane_title _colon_pane_current_path _pane_active _pane_current_command _pane_pid history_size
 	while tmr:read _line_type session_name window_index _window_active _colon_window_flags pane_index _pane_title _colon_pane_current_path _pane_active _pane_current_command _pane_pid history_size; do
-		capture_pane_contents "${session_name}:${window_index}.${pane_index}" "$history_size" "$pane_contents_area"
+		local pane_id
+		pane_id="$(custom_pane_id "${session_name}" "${window_index}" "${pane_index}")"
+		capture_pane_contents "$pane_id" "$history_size" "$pane_contents_area"
 	done <<< "${raw_panes}"
 }
 

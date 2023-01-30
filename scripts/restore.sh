@@ -50,18 +50,16 @@ pane_exists() {
 }
 
 register_existing_pane() {
-	local session_name="$1"
-	local window_index="$2"
-	local pane_index="$3"
-	local pane_custom_id="${session_name}:${window_index}.${pane_index}"
+	local session_name="$1" window_index="$2" pane_index="$3"
+	local pane_custom_id
+	pane_custom_id="$(custom_pane_id "$session_name" "$window_index" "$pane_index")"
 	EXISTING_PANES_VAR+=("${pane_custom_id}")
 }
 
 is_pane_registered_as_existing() {
-	local session_name="$1"
-	local window_index="$2"
-	local pane_index="$3"
-	local pane_custom_id="${session_name}:${window_index}.${pane_index}"
+	local session_name="$1" window_index="$2" pane_index="$3"
+	local pane_custom_id
+	pane_custom_id="$(custom_pane_id "$session_name" "$window_index" "$pane_index")"
 	local IFS="$d"
 	[[ "${EXISTING_PANES_VAR[*]}" =~ (^|[$IFS])"${pane_custom_id}"([$IFS]|$) ]]
 }
@@ -144,7 +142,10 @@ new_window() {
 	local window_index="$2"
 	local pane_index="$3"
 	local pane_current_path_goal="$4"
-	local pane_id="${session_name}:${window_index}.${pane_index}"
+
+	local pane_id
+	pane_id="$(custom_pane_id "$session_name" "$window_index" "$pane_index")"
+
 	if is_restoring_pane_contents && pane_contents_file_exists "$pane_id"; then
 		local pane_creation_command
 		pane_creation_command="$(pane_creation_command "$pane_id")"
@@ -159,7 +160,10 @@ new_session() {
 	local window_index="$2"
 	local pane_index="$3"
 	local pane_current_path_goal="$4"
-	local pane_id="${session_name}:${window_index}.${pane_index}"
+
+	local pane_id
+	pane_id="$(custom_pane_id "$session_name" "$window_index" "$pane_index")"
+
 	if is_restoring_pane_contents && pane_contents_file_exists "$pane_id"; then
 		local pane_creation_command
 		pane_creation_command="$(pane_creation_command "$pane_id")"
@@ -180,7 +184,10 @@ new_pane() {
 	local window_index="$2"
 	local pane_index="$3"
 	local pane_current_path_goal="$4"
-	local pane_id="${session_name}:${window_index}.${pane_index}"
+
+	local pane_id
+	pane_id="$(custom_pane_id "$session_name" "$window_index" "$pane_index")"
+
 	if is_restoring_pane_contents && pane_contents_file_exists "$pane_id"; then
 		local pane_creation_command
 		pane_creation_command="$(pane_creation_command "$pane_id")"
