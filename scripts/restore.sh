@@ -50,16 +50,12 @@ pane_exists() {
 }
 
 register_existing_pane() {
-	local session_name="$1" window_index="$2" pane_index="$3"
-	local pane_custom_id
-	pane_custom_id="$(custom_pane_id "$session_name" "$window_index" "$pane_index")"
+	local pane_custom_id="$1"
 	EXISTING_PANES_VAR+=("${pane_custom_id}")
 }
 
 is_pane_registered_as_existing() {
-	local session_name="$1" window_index="$2" pane_index="$3"
-	local pane_custom_id
-	pane_custom_id="$(custom_pane_id "$session_name" "$window_index" "$pane_index")"
+	local pane_custom_id="$1"
 	local IFS="$d"
 	[[ "${EXISTING_PANES_VAR[*]}" =~ (^|[$IFS])"${pane_custom_id}"([$IFS]|$) ]]
 }
@@ -243,7 +239,7 @@ restore_pane() {
 		else
 			# Pane exists, no need to create it!
 			# Pane existence is registered. Later, its process also won't be restored.
-			register_existing_pane "${pane_args[@]}"
+			register_existing_pane "$pane_id"
 		fi
 	elif window_exists "$session_name" "$window_index"; then
 		new_pane "${pane_args[@]}"
@@ -373,7 +369,7 @@ restore_one_pane_process() {
 	local pane_id
 	pane_id="$(custom_pane_id "$session_name" "$window_index" "$pane_index")"
 
-	if is_pane_registered_as_existing "$session_name" "$window_index" "$pane_index"; then
+	if is_pane_registered_as_existing "$pane_id"; then
 		# Scenario where pane existed before restoration, so we're not
 		# restoring the proces either.
 		return
