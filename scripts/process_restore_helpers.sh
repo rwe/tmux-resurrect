@@ -18,31 +18,27 @@ get_pane_restoration_command() {
 	local pane_full_command_goal="$1"
 	local pane_current_path_goal="$2"
 
-	local pane_full_command
-
 	local inline_strategy
 	inline_strategy="$(_get_inline_strategy "$pane_full_command_goal")" # might not be defined
 
-	if [[ -n "$inline_strategy" ]]; then
-		# inline strategy exists
-		# check for additional "expansion" of inline strategy, e.g. `vim` to `vim -S`
-		if _strategy_exists "$inline_strategy"; then
-			local strategy_file
-			strategy_file="$(_get_strategy_file "$inline_strategy")"
-			pane_full_command="$("$strategy_file" "$pane_full_command_goal" "$pane_current_path_goal")"
-		else
-			pane_full_command="$inline_strategy"
-		fi
-	elif _strategy_exists "$pane_full_command_goal"; then
-		local strategy_file
-		strategy_file="$(_get_strategy_file "$pane_full_command_goal")"
-		pane_full_command="$("$strategy_file" "$pane_full_command_goal" "$pane_current_path_goal")"
-	else
-		# just invoke the raw command
-		pane_full_command="$pane_full_command_goal"
-	fi
+	# Collect non-empty strategies.
+	local s strategies=()
+	for s in "$inline_strategy" "$pane_full_command_goal"; do
+		[[ -n "$s" ]] || continue
+		strategies+=("$s")
 
-	out "$pane_full_command"
+		# check for additional "expansion" of inline strategy, e.g. `vim` to `vim -S`
+		if _strategy_exists "$s"; then
+			local strategy_file
+			strategy_file="$(_get_strategy_file "$s")"
+			"$strategy_file" "$pane_full_command_goal" "$pane_current_path_goal"
+			return
+		fi
+	done
+
+	# fall back to just the inline strategy or full command.
+	# If there are none, return failure.
+	[[ ${#strategies[@]} -gt 0 ]] && out "${strategies[0]}"
 }
 
 restore_pane_process() {
