@@ -144,7 +144,6 @@ new_window() {
 	local pane_current_path_goal="$3"
 	local pane_index="$4"
 	local pane_id="${session_name}:${window_index}.${pane_index}"
-	pane_current_path_goal="${pane_current_path_goal/#\~/$HOME}"
 	if is_restoring_pane_contents && pane_contents_file_exists "$pane_id"; then
 		local pane_creation_command
 		pane_creation_command="$(pane_creation_command "$session_name" "$window_index" "$pane_index")"
@@ -198,6 +197,7 @@ restore_pane() {
 
 	local pane_current_path_goal
 	pane_current_path_goal="${colon_pane_current_path#:}"
+	pane_current_path_goal="${pane_current_path_goal/#\~/$HOME}"
 
 	local pane_full_command_goal
 	pane_full_command_goal="${colon_pane_full_command#:}"
