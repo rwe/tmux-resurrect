@@ -103,20 +103,23 @@ tmux_socket() {
 	printf '%s\n' "${tmux_socket}"
 }
 
-# Tmux option stored in a global variable so that we don't have to "ask"
-# tmux server each time.
-cache_tmux_default_command() {
+get_tmux_default_command() {
 	local default_shell
 	default_shell="$(get_tmux_option "default-shell" "")"
 	local opt=""
 	if [[ "$(basename "$default_shell")" == "bash" ]]; then
 		opt="-l "
 	fi
-	TMUX_DEFAULT_COMMAND="$(get_tmux_option "default-command" "$opt$default_shell")"
-	export TMUX_DEFAULT_COMMAND
+	get_tmux_option "default-command" "$opt$default_shell"
 }
 
+# Tmux option stored in a global variable so that we don't have to "ask"
+# tmux server each time.
 tmux_default_command() {
+	if [[ -z "${TMUX_DEFAULT_COMMAND+x}" ]]; then
+		TMUX_DEFAULT_COMMAND="$(get_tmux_default_command)"
+		export TMUX_DEFAULT_COMMAND
+	fi
 	echo "$TMUX_DEFAULT_COMMAND"
 }
 
@@ -272,7 +275,6 @@ detect_if_restoring_from_scratch() {
 
 detect_if_restoring_pane_contents() {
 	if capture_pane_contents_option_on; then
-		cache_tmux_default_command
 		restore_pane_contents_true
 	fi
 }
