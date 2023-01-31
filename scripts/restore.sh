@@ -9,7 +9,7 @@ source "$CURRENT_DIR/spinner_helpers.sh"
 # Used during the restore: if a pane already exists from before, it is
 # saved in the array in this variable. Later, process running in existing pane
 # is also not restored. That makes the restoration process more idempotent.
-: "${EXISTING_PANES_VAR:=}"
+declare -a EXISTING_PANES_VAR
 
 : "${RESTORING_FROM_SCRATCH:=false}"
 : "${RESTORE_PANE_CONTENTS:=false}"
@@ -54,8 +54,7 @@ register_existing_pane() {
 	local window_index="$2"
 	local pane_index="$3"
 	local pane_custom_id="${session_name}:${window_index}.${pane_index}"
-	local delimiter=$'\t'
-	EXISTING_PANES_VAR="${EXISTING_PANES_VAR}${delimiter}${pane_custom_id}"
+	EXISTING_PANES_VAR+=("${pane_custom_id}")
 }
 
 is_pane_registered_as_existing() {
@@ -63,7 +62,8 @@ is_pane_registered_as_existing() {
 	local window_index="$2"
 	local pane_index="$3"
 	local pane_custom_id="${session_name}:${window_index}.${pane_index}"
-	[[ "$EXISTING_PANES_VAR" == *"$pane_custom_id"* ]]
+	local IFS="$d"
+	[[ "${EXISTING_PANES_VAR[*]}" =~ (^|[$IFS])"${pane_custom_id}"([$IFS]|$) ]]
 }
 
 restore_from_scratch_true() {
