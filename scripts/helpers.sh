@@ -13,12 +13,12 @@ d=$'\t'
 # helper functions
 get_tmux_option() {
 	local option="$1"
-	local default_value="$2"
 	local option_value status=0
 	option_value=$(tmux show-option -gv "$option" 2>/dev/null) || status=$?
 	if [[ $status -eq 0 ]]; then
 		echo "$option_value"
-	elif [[ $status -eq 1 ]]; then
+	elif [[ $status -eq 1 && $# -eq 2 ]]; then
+		local default_value="$2"
 		echo "$default_value"
 	else
 		# Some other failure.
