@@ -182,7 +182,6 @@ new_pane() {
 }
 
 restore_pane() {
-	local pane="$1"
 	local _line_type session_name window_index _window_active _colon_window_flags pane_index pane_title colon_pane_current_path _pane_active _pane_current_command colon_pane_full_command
 
 	while IFS=$d read _line_type session_name window_index _window_active _colon_window_flags pane_index pane_title colon_pane_current_path _pane_active _pane_current_command colon_pane_full_command; do
@@ -217,30 +216,27 @@ restore_pane() {
 		fi
 		# set pane title
 		tmux select-pane -t "$session_name:$window_index.$pane_index" -T "$pane_title"
-	done <<< "$pane"
+	done
 }
 
 restore_state() {
-	local state="$1"
 	local _line_type client_session client_last_session
 
 	while IFS=$d read _line_type client_session client_last_session; do
 		tmux switch-client -t "$client_last_session"
 		tmux switch-client -t "$client_session"
-	done <<< "$state"
+	done
 }
 
 restore_grouped_session() {
-	local grouped_session_line="$1"
 	local _line_type grouped_session original_session _colon_alternate_window_index _colon_active_window_index
 
 	while IFS=$d read _line_type grouped_session original_session _colon_alternate_window_index _colon_active_window_index; do
 		TMUX='' tmux -S "$(tmux_socket)" new-session -d -s "$grouped_session" -t "$original_session"
-	done <<< "$grouped_session_line"
+	done
 }
 
 restore_active_and_alternate_windows_for_grouped_sessions() {
-	local grouped_session_line="$1"
 	local _line_type grouped_session original_session colon_alternate_window_index colon_active_window_index
 
 	while IFS=$d read _line_type grouped_session original_session colon_alternate_window_index colon_active_window_index; do
@@ -253,7 +249,7 @@ restore_active_and_alternate_windows_for_grouped_sessions() {
 		if [[ -n "$active_window_index" ]]; then
 			tmux switch-client -t "${grouped_session}:${active_window_index}"
 		fi
-	done <<< "$grouped_session_line"
+	done
 }
 
 never_ever_overwrite() {
@@ -291,7 +287,7 @@ restore_all_panes() {
 	local line
 	while read line; do
 		if is_line_type 'pane' "$line"; then
-			restore_pane "$line"
+			restore_pane <<< "$line"
 		fi
 	done
 }
@@ -373,8 +369,8 @@ restore_grouped_sessions() {
 
 	while read line; do
 		if is_line_type 'grouped_session' "$line"; then
-			restore_grouped_session "$line"
-			restore_active_and_alternate_windows_for_grouped_sessions "$line"
+			restore_grouped_session <<< "$line"
+			restore_active_and_alternate_windows_for_grouped_sessions <<< "$line"
 		fi
 	done
 }
@@ -406,7 +402,7 @@ restore_active_and_alternate_sessions() {
 
 	while read line; do
 		if is_line_type 'state' "$line"; then
-			restore_state "$line"
+			restore_state <<< "$line"
 		fi
 	done
 }
