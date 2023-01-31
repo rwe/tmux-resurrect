@@ -134,39 +134,16 @@ pane_creation_command() {
 }
 
 new_window() {
-	local session_name="$1"
-	local window_index="$2"
-	local pane_index="$3"
-	local pane_current_path_goal="$4"
+	local session_name="$1" window_index="$2" pane_index="$3" creation_args=("${@:4}")
 
-	local pane_id
-	pane_id="$(custom_pane_id "$session_name" "$window_index" "$pane_index")"
-
-	if is_restoring_pane_contents && pane_contents_file_exists "$pane_id"; then
-		local pane_creation_command
-		pane_creation_command="$(pane_creation_command "$pane_id")"
-		tmux new-window -d -t "${session_name}:${window_index}" -c "$pane_current_path_goal" "$pane_creation_command"
-	else
-		tmux new-window -d -t "${session_name}:${window_index}" -c "$pane_current_path_goal"
-	fi
+	tmux new-window -d -t "${session_name}:${window_index}" "${creation_args[@]}"
 }
 
 new_session() {
-	local session_name="$1"
-	local window_index="$2"
-	local pane_index="$3"
-	local pane_current_path_goal="$4"
+	local session_name="$1" window_index="$2" pane_index="$3" creation_args=("${@:4}")
 
-	local pane_id
-	pane_id="$(custom_pane_id "$session_name" "$window_index" "$pane_index")"
+	TMUX='' tmux -S "$(tmux_socket)" new-session -d -s "$session_name" "${creation_args[@]}"
 
-	if is_restoring_pane_contents && pane_contents_file_exists "$pane_id"; then
-		local pane_creation_command
-		pane_creation_command="$(pane_creation_command "$pane_id")"
-		TMUX='' tmux -S "$(tmux_socket)" new-session -d -s "$session_name" -c "$pane_current_path_goal" "$pane_creation_command"
-	else
-		TMUX='' tmux -S "$(tmux_socket)" new-session -d -s "$session_name" -c "$pane_current_path_goal"
-	fi
 	# change first window number if necessary
 	local created_window_index
 	created_window_index="$(first_window_index)"
@@ -176,36 +153,22 @@ new_session() {
 }
 
 new_pane() {
-	local session_name="$1"
-	local window_index="$2"
-	local pane_index="$3"
-	local pane_current_path_goal="$4"
+	local session_name="$1" window_index="$2" pane_index="$3" creation_args=("${@:4}")
 
-	local pane_id
-	pane_id="$(custom_pane_id "$session_name" "$window_index" "$pane_index")"
+	tmux split-window -t "${session_name}:${window_index}" "${creation_args[@]}"
 
-	if is_restoring_pane_contents && pane_contents_file_exists "$pane_id"; then
-		local pane_creation_command
-		pane_creation_command="$(pane_creation_command "$pane_id")"
-		tmux split-window -t "${session_name}:${window_index}" -c "$pane_current_path_goal" "$pane_creation_command"
-	else
-		tmux split-window -t "${session_name}:${window_index}" -c "$pane_current_path_goal"
-	fi
 	# minimize window so more panes can fit
 	tmux resize-pane -t "${session_name}:${window_index}" -U 999
 }
 
 replace_pane() {
-	local session_name="$1"
-	local window_index="$2"
-	local pane_index="$3"
-	local pane_current_path_goal="$4"
+	local session_name="$1" window_index="$2" pane_index="$3" creation_args=("${@:4}")
 
 	# overwrite the pane
 	# happens only for the first pane if it's the only registered pane for the whole tmux server
 	local orig_pane_id
 	orig_pane_id="$(tmux display-message -p -F '#{pane_id}' -t "$session_name:$window_index")"
-	new_pane "$session_name" "$window_index" "$pane_index" "$pane_current_path_goal"
+	new_pane "$session_name" "$window_index" "$pane_index" "${creation_args[@]}"
 	tmux kill-pane -t "$orig_pane_id"
 }
 
@@ -229,7 +192,10 @@ restore_pane() {
 	local pane_id
 	pane_id="$(custom_pane_id "${pane_locator[@]}")"
 
-	local pane_args=("${pane_locator[@]}" "$pane_current_path_goal")
+	local pane_args=("${pane_locator[@]}" -c "$pane_current_path_goal")
+	if is_restoring_pane_contents && pane_contents_file_exists "$pane_id"; then
+		pane_args+=("$(pane_creation_command "$pane_id")")
+	fi
 
 	if pane_exists "${pane_locator[@]}"; then
 		if is_restoring_from_scratch; then
