@@ -156,17 +156,12 @@ pane_contents_archive_file() {
 execute_hook() {
 	local kind="$1"
 	shift
-	local args='' hook=''
 
-	hook=$(get_tmux_option "$hook_prefix$kind" '')
+	local hook
+	hook="$(get_tmux_option "$hook_prefix$kind" '')"
+	[[ -n "$hook" ]] || return 0
 
-	# If there are any args, pass them to the hook (in a way that preserves/copes
+	# If there are any args, pass them to the hook in a way that preserves/copes
 	# with spaces and unusual characters.
-	if [[ $# -gt 0 ]]; then
-		printf -v args '%q ' "$@"
-	fi
-
-	if [[ -n "$hook" ]]; then
-		eval "$hook $args"
-	fi
+	eval "$hook$(printf ' %q' "$@")"
 }
