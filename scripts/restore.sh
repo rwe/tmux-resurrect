@@ -15,6 +15,8 @@ RESTORING_FROM_SCRATCH="false"
 
 RESTORE_PANE_CONTENTS="false"
 
+RESTORED_SESSION_0=false
+
 is_line_type() {
 	local line_type="$1"
 	local line="$2"
