@@ -11,45 +11,45 @@ restore_pane_processes_enabled() {
 }
 
 restore_pane_process() {
-	local pane_full_command="$1"
+	local pane_full_command_goal="$1"
 	local session_name="$2"
 	local window_index="$3"
 	local pane_index="$4"
-	local dir="$5"
-	local command
-	if _process_should_be_restored "$pane_full_command" "$session_name" "$window_index" "$pane_index"; then
+	local pane_current_path_goal="$5"
+	local pane_full_command
+	if _process_should_be_restored "$pane_full_command_goal" "$session_name" "$window_index" "$pane_index"; then
 		tmux switch-client -t "${session_name}:${window_index}"
 		tmux select-pane -t "$pane_index"
 
 		local inline_strategy
-		inline_strategy="$(_get_inline_strategy "$pane_full_command")" # might not be defined
+		inline_strategy="$(_get_inline_strategy "$pane_full_command_goal")" # might not be defined
 		if [[ -n "$inline_strategy" ]]; then
 			# inline strategy exists
 			# check for additional "expansion" of inline strategy, e.g. `vim` to `vim -S`
 			if _strategy_exists "$inline_strategy"; then
 				local strategy_file
 				strategy_file="$(_get_strategy_file "$inline_strategy")"
-				inline_strategy="$("$strategy_file" "$pane_full_command" "$dir")"
+				inline_strategy="$("$strategy_file" "$pane_full_command_goal" "$pane_current_path_goal")"
 			fi
-			command="$inline_strategy"
-		elif _strategy_exists "$pane_full_command"; then
+			pane_full_command="$inline_strategy"
+		elif _strategy_exists "$pane_full_command_goal"; then
 			local strategy_file
-			strategy_file="$(_get_strategy_file "$pane_full_command")"
+			strategy_file="$(_get_strategy_file "$pane_full_command_goal")"
 			local strategy_command
-			strategy_command="$("$strategy_file" "$pane_full_command" "$dir")"
-			command="$strategy_command"
+			strategy_command="$("$strategy_file" "$pane_full_command_goal" "$pane_current_path_goal")"
+			pane_full_command="$strategy_command"
 		else
 			# just invoke the raw command
-			command="$pane_full_command"
+			pane_full_command="$pane_full_command_goal"
 		fi
-		tmux send-keys -t "${session_name}:${window_index}.${pane_index}" "$command" 'C-m'
+		tmux send-keys -t "${session_name}:${window_index}.${pane_index}" "$pane_full_command" 'C-m'
 	fi
 }
 
 # private functions below
 
 _process_should_be_restored() {
-	local pane_full_command="$1"
+	local pane_full_command_goal="$1"
 	local session_name="$2"
 	local window_index="$3"
 	local pane_index="$4"
@@ -62,7 +62,7 @@ _process_should_be_restored() {
 		return 1
 	elif _restore_all_processes; then
 		return 0
-	elif _process_on_the_restore_list "$pane_full_command"; then
+	elif _process_on_the_restore_list "$pane_full_command_goal"; then
 		return 0
 	else
 		return 1
