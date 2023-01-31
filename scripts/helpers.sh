@@ -14,12 +14,15 @@ d=$'\t'
 get_tmux_option() {
 	local option="$1"
 	local default_value="$2"
-	local option_value
-	option_value=$(tmux show-option -gqv "$option")
-	if [[ -z "$option_value" ]]; then
+	local option_value status=0
+	option_value=$(tmux show-option -gv "$option" 2>/dev/null) || status=$?
+	if [[ $status -eq 0 ]]; then
+		echo "$option_value"
+	elif [[ $status -eq 1 ]]; then
 		echo "$default_value"
 	else
-		echo "$option_value"
+		# Some other failure.
+		return $status
 	fi
 }
 
