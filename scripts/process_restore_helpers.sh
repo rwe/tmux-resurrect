@@ -181,15 +181,17 @@ _get_inline_strategy() {
 
 _strategy_exists() {
 	local pane_full_command="$1"
+	[[ -n "$pane_full_command" ]] || return 1
+
+	# strategy set?
 	local strategy
 	strategy="$(_get_command_strategy "$pane_full_command")"
-	if [[ -n "$strategy" ]]; then # strategy set?
-		local strategy_file
-		strategy_file="$(_get_strategy_file "$pane_full_command")"
-		[[ -e "$strategy_file" ]] # strategy file exists?
-	else
-		return 1
-	fi
+	[[ -n "$strategy" ]] || return 1
+
+	# strategy file exists?
+	local strategy_file
+	strategy_file="$(_get_strategy_file "$pane_full_command")"
+	[[ -e "$strategy_file" ]] || return 1
 }
 
 _get_command_strategy() {
