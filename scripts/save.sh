@@ -187,17 +187,20 @@ get_grouped_sessions() {
 
 is_session_grouped() {
 	local session_name="$1"
+	local grouped_session_names=("${@:2}")
 	local IFS="$d"
-	[[ "${GROUPED_SESSIONS[*]}" =~ (^|[$IFS])"${session_name}"([$IFS]|$) ]]
+	[[ "${grouped_session_names[*]}" =~ (^|[$IFS])"${session_name}"([$IFS]|$) ]]
 }
 
 # translates pane pid to process command running inside a pane
 dump_panes() {
+	local grouped_session_names=("$@")
+
 	local line_type session_name window_index window_active colon_window_flags pane_index pane_title colon_pane_current_path pane_active pane_current_command pane_pid _history_size
 	dump_panes_raw |
 		while IFS=$d read line_type session_name window_index window_active colon_window_flags pane_index pane_title colon_pane_current_path pane_active pane_current_command pane_pid _history_size; do
 			# not saving panes from grouped sessions
-			if is_session_grouped "$session_name"; then
+			if is_session_grouped "$session_name" "${grouped_session_names[@]}"; then
 				continue
 			fi
 			local colon_pane_full_command
@@ -222,12 +225,14 @@ dump_panes() {
 }
 
 dump_windows() {
+	local grouped_session_names=("$@")
+
 	local line_type session_name window_index colon_window_name window_active colon_window_flags window_layout
 
 	dump_windows_raw |
 		while IFS=$d read line_type session_name window_index colon_window_name window_active colon_window_flags window_layout; do
 			# not saving windows from grouped sessions
-			if is_session_grouped "$session_name"; then
+			if is_session_grouped "$session_name" "${grouped_session_names[@]}"; then
 				continue
 			fi
 
@@ -285,8 +290,8 @@ save_all() {
 	mkdir -p "$(resurrect_dir)"
 	{
 		fetch_and_dump_grouped_sessions
-		dump_panes
-		dump_windows
+		dump_panes "${GROUPED_SESSIONS[@]}"
+		dump_windows "${GROUPED_SESSIONS[@]}"
 		dump_state
 	} > "$resurrect_file_path"
 	execute_hook 'post-save-layout' "$resurrect_file_path"
