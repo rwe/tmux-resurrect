@@ -323,11 +323,11 @@ main() {
 
 	if show_output; then
 		start_spinner 'Saving...' 'Tmux environment saved!'
-	fi
-	save_all
-	if show_output; then
+		save_all
 		stop_spinner
 		display_message 'Tmux environment saved!'
+	else
+		save_all
 	fi
 }
 main
