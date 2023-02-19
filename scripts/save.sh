@@ -172,7 +172,14 @@ fetch_and_dump_grouped_sessions(){
 }
 
 get_grouped_sessions() {
-	GROUPED_SESSIONS="$(cut -f2 -d"$d" | tr '\n' "$d")"
+	# Reads grouped_session records and outputs tab-separated list of sessions.
+	local _line_type session_name _original_session _colon_alternate_window_index _colon_active_window_index
+	local grouped_session_names=()
+	while IFS="$d" read _line_type session_name _original_session _colon_alternate_window_index _colon_active_window_index; do
+		grouped_session_names+=("${session_name}")
+	done
+	local IFS="$d"
+	GROUPED_SESSIONS="${grouped_session_names[*]}"
 }
 
 is_session_grouped() {
