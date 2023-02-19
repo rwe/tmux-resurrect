@@ -426,7 +426,7 @@ cleanup_restored_pane_contents() {
 	fi
 }
 
-main() {
+tmr:restore() {
 	supported_tmux_version_ok || return $?
 
 	local resurrect_file
@@ -453,4 +453,5 @@ main() {
 	stop_spinner
 	display_message 'Tmux restore complete!'
 }
-main
+
+[[ "${#BASH_SOURCE[@]}" -ne 1 || "${BASH_SOURCE[0]}" != "${0}" ]] || tmr:restore "$@"
