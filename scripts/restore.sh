@@ -230,7 +230,7 @@ restore_pane() {
 	done
 }
 
-restore_state() {
+restore_active_and_alternate_session_states() {
 	local _line_type client_session client_last_session
 
 	while IFS=$d read _line_type client_session client_last_session; do
@@ -394,7 +394,7 @@ restore_active_and_alternate_windows() {
 }
 
 restore_active_and_alternate_sessions() {
-	restore_state < <(records-of-type 'state' || :)
+	restore_active_and_alternate_session_states < <(records-of-type 'state' || :)
 }
 
 # A cleanup that happens after 'restore_all_panes' seems to fix fish shell
