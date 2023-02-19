@@ -168,7 +168,7 @@ fetch_and_dump_grouped_sessions(){
 	[[ -n "$grouped_sessions_dump" ]] || return 0
 	echo "$grouped_sessions_dump"
 
-	get_grouped_sessions <<< "$grouped_sessions_dump"
+	GROUPED_SESSIONS="$(get_grouped_sessions <<< "$grouped_sessions_dump")"
 }
 
 get_grouped_sessions() {
@@ -179,7 +179,7 @@ get_grouped_sessions() {
 		grouped_session_names+=("${session_name}")
 	done
 	local IFS="$d"
-	GROUPED_SESSIONS="${grouped_session_names[*]}"
+	echo "${grouped_session_names[*]}"
 }
 
 is_session_grouped() {
