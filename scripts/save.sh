@@ -168,7 +168,10 @@ fetch_and_dump_grouped_sessions(){
 	[[ -n "$grouped_sessions_dump" ]] || return 0
 	echo "$grouped_sessions_dump"
 
-	GROUPED_SESSIONS="$(get_grouped_sessions <<< "$grouped_sessions_dump")"
+	local grouped_session_names_tsv
+	grouped_session_names_tsv="$(get_grouped_sessions <<< "$grouped_sessions_dump")"
+
+	IFS="$d" read -a GROUPED_SESSIONS <<< "${grouped_session_names_tsv}"
 }
 
 get_grouped_sessions() {
@@ -184,7 +187,8 @@ get_grouped_sessions() {
 
 is_session_grouped() {
 	local session_name="$1"
-	[[ "$GROUPED_SESSIONS" =~ (^|"${d}")"${session_name}"("${d}"|$) ]]
+	local IFS="$d"
+	[[ "${GROUPED_SESSIONS[*]}" =~ (^|[$IFS])"${session_name}"([$IFS]|$) ]]
 }
 
 # translates pane pid to process command running inside a pane
