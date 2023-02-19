@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+: "${CURRENT_DIR:="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"}" || :
 
 source "$CURRENT_DIR/process_restore_helpers.sh"
 source "$CURRENT_DIR/spinner_helpers.sh"
@@ -9,13 +9,11 @@ source "$CURRENT_DIR/spinner_helpers.sh"
 # Used during the restore: if a pane already exists from before, it is
 # saved in the array in this variable. Later, process running in existing pane
 # is also not restored. That makes the restoration process more idempotent.
-EXISTING_PANES_VAR=""
+: "${EXISTING_PANES_VAR:=}"
 
-RESTORING_FROM_SCRATCH="false"
-
-RESTORE_PANE_CONTENTS="false"
-
-RESTORED_SESSION_0=false
+: "${RESTORING_FROM_SCRATCH:=false}"
+: "${RESTORE_PANE_CONTENTS:=false}"
+: "${RESTORED_SESSION_0:=false}"
 
 is_line_type() {
 	local line_type="$1"
