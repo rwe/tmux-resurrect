@@ -172,12 +172,12 @@ fetch_and_dump_grouped_sessions(){
 }
 
 get_grouped_sessions() {
-	GROUPED_SESSIONS="${d}$(cut -f2 -d"$d" | tr '\n' "$d")"
+	GROUPED_SESSIONS="$(cut -f2 -d"$d" | tr '\n' "$d")"
 }
 
 is_session_grouped() {
 	local session_name="$1"
-	[[ "$GROUPED_SESSIONS" == *"${d}${session_name}${d}"* ]]
+	[[ "$GROUPED_SESSIONS" =~ (^|"${d}")"${session_name}"("${d}"|$) ]]
 }
 
 # translates pane pid to process command running inside a pane
