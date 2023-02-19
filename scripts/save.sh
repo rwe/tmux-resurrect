@@ -3,7 +3,7 @@
 : "${CURRENT_DIR:="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"}" || :
 
 source "$CURRENT_DIR/helpers.sh"
-source "$CURRENT_DIR/spinner_helpers.sh"
+source "$CURRENT_DIR/tmux_spinner.sh"
 
 _grouped_sessions_tmux_fields=(
 	'#{session_grouped}'
@@ -360,9 +360,13 @@ tmr:save() {
 	supported_tmux_version_ok || return $?
 
 	if [[ "${1:-}" != 'quiet' ]]; then
-		start_spinner 'Saving...' 'Tmux environment saved!'
+		local spinner_pid
+		tmr:spinner 'Saving...' 'Tmux environment saved!'&
+		spinner_pid=$!
+
 		save_all
-		stop_spinner
+
+		kill $spinner_pid
 		display_message 'Tmux environment saved!'
 	else
 		save_all

@@ -3,7 +3,7 @@
 : "${CURRENT_DIR:="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"}" || :
 
 source "$CURRENT_DIR/process_restore_helpers.sh"
-source "$CURRENT_DIR/spinner_helpers.sh"
+source "$CURRENT_DIR/tmux_spinner.sh"
 
 # Global variable.
 # Used during the restore: if a pane already exists from before, it is
@@ -411,7 +411,10 @@ tmr:restore() {
 
 	check_saved_session_exists "${resurrect_file}" || return $?
 
-	start_spinner 'Restoring...' 'Tmux restore complete!'
+	local spinner_pid
+	tmr:spinner 'Restoring...' 'Tmux restore complete!'&
+	spinner_pid=$!
+
 	execute_hook 'pre-restore-all'
 
 	local restore_from_scratch=false
@@ -448,7 +451,8 @@ tmr:restore() {
 		cleanup_restored_pane_contents
 	fi
 	execute_hook 'post-restore-all'
-	stop_spinner
+
+	kill $spinner_pid
 	display_message 'Tmux restore complete!'
 }
 
