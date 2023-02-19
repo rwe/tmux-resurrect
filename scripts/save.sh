@@ -270,6 +270,13 @@ dump_pane_contents() {
 		done
 }
 
+dump_layout() {
+	fetch_and_dump_grouped_sessions
+	dump_panes "${GROUPED_SESSIONS[@]}"
+	dump_windows "${GROUPED_SESSIONS[@]}"
+	dump_state
+}
+
 remove_old_backups() {
 	# remove resurrect files older than 30 days (default), but keep at least 5 copies of backup.
 	local delete_after
@@ -288,12 +295,7 @@ save_all() {
 	last_resurrect_file="$(last_resurrect_file)"
 
 	mkdir -p "$(resurrect_dir)"
-	{
-		fetch_and_dump_grouped_sessions
-		dump_panes "${GROUPED_SESSIONS[@]}"
-		dump_windows "${GROUPED_SESSIONS[@]}"
-		dump_state
-	} > "$resurrect_file_path"
+	dump_layout > "$resurrect_file_path"
 	execute_hook 'post-save-layout' "$resurrect_file_path"
 	if files_differ "$resurrect_file_path" "$last_resurrect_file"; then
 		ln -fs "$(basename "$resurrect_file_path")" "$last_resurrect_file"
