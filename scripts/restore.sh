@@ -15,12 +15,6 @@ source "$CURRENT_DIR/spinner_helpers.sh"
 : "${RESTORE_PANE_CONTENTS:=false}"
 : "${RESTORED_SESSION_0:=false}"
 
-is_line_type() {
-	local line_type="$1"
-	local line="$2"
-	[[ "$line" == "$line_type"* ]]
-}
-
 check_saved_session_exists() {
 	local resurrect_file
 	resurrect_file="$1"
@@ -284,12 +278,7 @@ restore_all_panes() {
 		pane_content_files_restore_from_archive
 	fi
 
-	local line
-	while read line; do
-		if is_line_type 'pane' "$line"; then
-			restore_pane <<< "$line"
-		fi
-	done
+	restore_pane < <(\grep '^pane')
 }
 
 handle_session_0() {
@@ -368,11 +357,9 @@ restore_grouped_sessions() {
 	local line
 
 	while read line; do
-		if is_line_type 'grouped_session' "$line"; then
-			restore_grouped_session <<< "$line"
-			restore_active_and_alternate_windows_for_grouped_sessions <<< "$line"
-		fi
-	done
+		restore_grouped_session <<< "$line"
+		restore_active_and_alternate_windows_for_grouped_sessions <<< "$line"
+	done < <(\grep '^grouped_session')
 }
 
 restore_active_and_alternate_windows() {
@@ -398,13 +385,7 @@ restore_active_and_alternate_windows() {
 }
 
 restore_active_and_alternate_sessions() {
-	local line
-
-	while read line; do
-		if is_line_type 'state' "$line"; then
-			restore_state <<< "$line"
-		fi
-	done
+	restore_state < <(\grep '^state')
 }
 
 # A cleanup that happens after 'restore_all_panes' seems to fix fish shell
