@@ -5,9 +5,6 @@ CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$CURRENT_DIR/helpers.sh"
 source "$CURRENT_DIR/spinner_helpers.sh"
 
-# if "quiet" script produces no output
-SCRIPT_OUTPUT="$1"
-
 _grouped_sessions_tmux_fields=(
 	'#{session_grouped}'
 	'#{session_group}'
@@ -314,14 +311,11 @@ save_all() {
 	execute_hook 'post-save-all'
 }
 
-show_output() {
-	[[ "$SCRIPT_OUTPUT" != 'quiet' ]]
-}
-
+# if first argument is "quiet", script produces no output.
 main() {
 	supported_tmux_version_ok || return $?
 
-	if show_output; then
+	if [[ "${1:-}" != 'quiet' ]]; then
 		start_spinner 'Saving...' 'Tmux environment saved!'
 		save_all
 		stop_spinner
@@ -330,4 +324,4 @@ main() {
 		save_all
 	fi
 }
-main
+main "$@"
