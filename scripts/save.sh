@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+: "${CURRENT_DIR:="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"}" || :
 
 source "$CURRENT_DIR/helpers.sh"
 source "$CURRENT_DIR/spinner_helpers.sh"
@@ -354,7 +354,7 @@ save_all() {
 }
 
 # if first argument is "quiet", script produces no output.
-main() {
+tmr:save() {
 	supported_tmux_version_ok || return $?
 
 	if [[ "${1:-}" != 'quiet' ]]; then
@@ -366,4 +366,5 @@ main() {
 		save_all
 	fi
 }
-main "$@"
+
+[[ "${#BASH_SOURCE[@]}" -ne 1 || "${BASH_SOURCE[0]}" != "${0}" ]] || tmr:save "$@"
