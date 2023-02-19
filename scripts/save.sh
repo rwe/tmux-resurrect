@@ -168,12 +168,11 @@ fetch_and_dump_grouped_sessions(){
 	[[ -n "$grouped_sessions_dump" ]] || return 0
 	echo "$grouped_sessions_dump"
 
-	get_grouped_sessions "$grouped_sessions_dump"
+	get_grouped_sessions <<< "$grouped_sessions_dump"
 }
 
 get_grouped_sessions() {
-	local grouped_sessions_dump="$1"
-	GROUPED_SESSIONS="${d}$({ cut -f2 -d"$d" | tr '\n' "$d"; } <<< "$grouped_sessions_dump")"
+	GROUPED_SESSIONS="${d}$(cut -f2 -d"$d" | tr '\n' "$d")"
 }
 
 is_session_grouped() {
