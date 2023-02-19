@@ -192,7 +192,7 @@ new_pane() {
 	tmux resize-pane -t "${session_name}:${window_index}" -U 999
 }
 
-restore_pane() {
+restore_panes() {
 	local _line_type session_name window_index _window_active _colon_window_flags pane_index pane_title colon_pane_current_path _pane_active _pane_current_command colon_pane_full_command
 
 	while IFS=$d read _line_type session_name window_index _window_active _colon_window_flags pane_index pane_title colon_pane_current_path _pane_active _pane_current_command colon_pane_full_command; do
@@ -296,7 +296,7 @@ restore_all_panes() {
 		pane_content_files_restore_from_archive
 	fi
 
-	restore_pane < <(records-of-type 'pane' || :)
+	restore_panes < <(records-of-type 'pane' || :)
 }
 
 handle_session_0() {
