@@ -244,10 +244,9 @@ restore_active_and_alternate_sessions() {
 
 restore_grouped_session() {
 	local _line_type grouped_session original_session _colon_alternate_window_index _colon_active_window_index
+	IFS=$d read _line_type grouped_session original_session _colon_alternate_window_index _colon_active_window_index || return $?
 
-	while IFS=$d read _line_type grouped_session original_session _colon_alternate_window_index _colon_active_window_index; do
-		TMUX='' tmux -S "$(tmux_socket)" new-session -d -s "$grouped_session" -t "$original_session"
-	done
+	TMUX='' tmux -S "$(tmux_socket)" new-session -d -s "$grouped_session" -t "$original_session"
 }
 
 restore_active_and_alternate_windows_for_grouped_session() {
@@ -375,12 +374,17 @@ restore_zoomed_windows() {
 	each-record 'pane' restore_zoomed_window
 }
 
-restore_grouped_sessions() {
+restore_grouped_session_and_windows() {
 	local line
+	read line || return $?
 
-	while read line; do
-		restore_grouped_session <<< "$line"
-		restore_active_and_alternate_windows_for_grouped_session <<< "$line"
+	restore_grouped_session <<< "$line"
+	restore_active_and_alternate_windows_for_grouped_session <<< "$line"
+}
+
+restore_grouped_sessions() {
+	while restore_grouped_session_and_windows; do
+		:
 	done < <(records-of-type 'grouped_session' || :)
 }
 
