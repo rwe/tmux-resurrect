@@ -359,12 +359,18 @@ restore_active_pane_for_each_window() {
 	done < <(records-of-type 'pane' || :)
 }
 
-restore_zoomed_windows() {
+restore_zoomed_window() {
 	local _line_type session_name window_index _window_active colon_window_flags _pane_index _pane_title _colon_pane_current_path pane_active _pane_current_command _colon_pane_full_command
-	while IFS=$d read _line_type session_name window_index _window_active colon_window_flags _pane_index _pane_title _colon_pane_current_path pane_active _pane_current_command _colon_pane_full_command; do
-		[[ "${colon_window_flags}" == *Z* ]] || continue
-		[[ "${pane_active}" == 1 ]] || continue
-		tmux resize-pane -t "${session_name}:${window_index}" -Z
+	IFS=$d read _line_type session_name window_index _window_active colon_window_flags _pane_index _pane_title _colon_pane_current_path pane_active _pane_current_command _colon_pane_full_command || return $?
+
+	[[ "${colon_window_flags}" == *Z* ]] || return 0
+	[[ "${pane_active}" == 1 ]] || return 0
+	tmux resize-pane -t "${session_name}:${window_index}" -Z
+}
+
+restore_zoomed_windows() {
+	while restore_zoomed_window; do
+		:
 	done < <(records-of-type 'pane' || :)
 }
 
