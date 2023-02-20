@@ -15,6 +15,15 @@ source "$CURRENT_DIR/spinner_helpers.sh"
 : "${RESTORE_PANE_CONTENTS:=false}"
 : "${RESTORED_SESSION_0:=false}"
 
+
+# Filter records by type, where the type is a constant given in the first field
+# of the record.
+records-of-type() {
+	local record_type="$1"
+	# Filter with grep, but only fail on real errors, not "no matches" (status 1).
+	\grep "^${record_type}${d}" || [[ $? -eq 1 ]]
+}
+
 check_saved_session_exists() {
 	local resurrect_file
 	resurrect_file="$1"
