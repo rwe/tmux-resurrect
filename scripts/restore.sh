@@ -331,9 +331,7 @@ restore_window_property() {
 }
 
 restore_window_properties() {
-	while restore_window_property; do
-		:
-	done < <(records-of-type 'window' || :)
+	each-record 'window' restore_window_property
 }
 
 restore_all_pane_processes() {
