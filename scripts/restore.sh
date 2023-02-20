@@ -24,6 +24,14 @@ records-of-type() {
 	\grep "^${record_type}${d}" || [[ $? -eq 1 ]]
 }
 
+each-record() {
+	local record_type="$1"
+	shift
+	while "$@"; do
+		:
+	done < <(records-of-type "${record_type}" || :)
+}
+
 check_saved_session_exists() {
 	local resurrect_file
 	resurrect_file="$1"
