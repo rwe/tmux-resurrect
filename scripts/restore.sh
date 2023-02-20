@@ -311,23 +311,28 @@ handle_session_0() {
 	fi
 }
 
-restore_window_properties() {
+restore_window_property() {
 	local _line_type session_name window_index colon_window_name _window_active _colon_window_flags window_layout automatic_rename
+	IFS=$d read _line_type session_name window_index colon_window_name _window_active _colon_window_flags window_layout automatic_rename || return $?
 
-	while IFS=$d read _line_type session_name window_index colon_window_name _window_active _colon_window_flags window_layout automatic_rename; do
-		tmux select-layout -t "${session_name}:${window_index}" "$window_layout"
+	tmux select-layout -t "${session_name}:${window_index}" "$window_layout"
 
-		# Below steps are properly handling window names and automatic-rename
-		# option. `rename-window` is an extra command in some scenarios, but we
-		# opted for always doing it to keep the code simple.
-		local window_name
-		window_name="${colon_window_name#:}"
-		tmux rename-window -t "${session_name}:${window_index}" "$window_name"
-		if [[ "${automatic_rename}" == ':' ]]; then
-			tmux set-option -u -t "${session_name}:${window_index}" automatic-rename
-		else
-			tmux set-option -t "${session_name}:${window_index}" automatic-rename "$automatic_rename"
-		fi
+	# Below steps are properly handling window names and automatic-rename
+	# option. `rename-window` is an extra command in some scenarios, but we
+	# opted for always doing it to keep the code simple.
+	local window_name
+	window_name="${colon_window_name#:}"
+	tmux rename-window -t "${session_name}:${window_index}" "$window_name"
+	if [[ "${automatic_rename}" == ':' ]]; then
+		tmux set-option -u -t "${session_name}:${window_index}" automatic-rename
+	else
+		tmux set-option -t "${session_name}:${window_index}" automatic-rename "$automatic_rename"
+	fi
+}
+
+restore_window_properties() {
+	while restore_window_property; do
+		:
 	done < <(records-of-type 'window' || :)
 }
 
