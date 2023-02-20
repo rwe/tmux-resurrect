@@ -4,6 +4,7 @@
 
 source "$CURRENT_DIR/helpers.sh"
 source "$CURRENT_DIR/tmux_spinner.sh"
+source "$CURRENT_DIR/check_tmux_version.sh"
 
 _grouped_sessions_tmux_fields=(
 	'#{session_grouped}'
@@ -357,7 +358,7 @@ save_all() {
 
 # if first argument is "quiet", script produces no output.
 tmr:save() {
-	supported_tmux_version_ok || return $?
+	tmr:check-tmux-version "${SUPPORTED_VERSION}" || return $?
 
 	if [[ "${1:-}" != 'quiet' ]]; then
 		local spinner_pid

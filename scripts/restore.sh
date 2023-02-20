@@ -4,6 +4,7 @@
 
 source "$CURRENT_DIR/process_restore_helpers.sh"
 source "$CURRENT_DIR/tmux_spinner.sh"
+source "$CURRENT_DIR/check_tmux_version.sh"
 
 # Global variable.
 # Used during the restore: if a pane already exists from before, it is
@@ -404,7 +405,7 @@ cleanup_restored_pane_contents() {
 }
 
 tmr:restore() {
-	supported_tmux_version_ok || return $?
+	tmr:check-tmux-version "${SUPPORTED_VERSION}" || return $?
 
 	local resurrect_file
 	resurrect_file="$(last_resurrect_file)"
