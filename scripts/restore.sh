@@ -238,14 +238,8 @@ restore_active_and_alternate_session_state() {
 	tmux switch-client -t "$client_session"
 }
 
-restore_active_and_alternate_session_states() {
-	while restore_active_and_alternate_session_state; do
-		:
-	done
-}
-
 restore_active_and_alternate_sessions() {
-	restore_active_and_alternate_session_states < <(records-of-type 'state' || :)
+	each-record 'state' restore_active_and_alternate_session_state
 }
 
 restore_grouped_session() {
