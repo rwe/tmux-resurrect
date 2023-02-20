@@ -367,8 +367,6 @@ restore_one_pane_process() {
 }
 
 restore_all_pane_processes() {
-	restore_pane_processes_enabled || return 0
-
 	each-record 'pane' restore_one_pane_process
 }
 
@@ -455,7 +453,9 @@ tmr:restore() {
 	handle_session_0
 	restore_window_properties >/dev/null 2>&1 < "${resurrect_file}"
 	execute_hook 'pre-restore-pane-processes'
-	restore_all_pane_processes < "${resurrect_file}"
+	if restore_pane_processes_enabled; then
+		restore_all_pane_processes < "${resurrect_file}"
+	fi
 	# below functions restore exact cursor positions
 	restore_active_pane_for_each_window < "${resurrect_file}"
 	restore_zoomed_windows < "${resurrect_file}"
