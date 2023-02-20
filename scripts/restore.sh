@@ -369,9 +369,7 @@ restore_zoomed_window() {
 }
 
 restore_zoomed_windows() {
-	while restore_zoomed_window; do
-		:
-	done < <(records-of-type 'pane' || :)
+	each-record 'pane' restore_zoomed_window
 }
 
 restore_grouped_sessions() {
