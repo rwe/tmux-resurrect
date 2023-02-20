@@ -4,9 +4,13 @@
 
 source "$CURRENT_DIR/helpers.sh"
 
+get_restore_processes_option() {
+	get_tmux_option "$restore_processes_option" "$restore_processes"
+}
+
 restore_pane_processes_enabled() {
 	local restore_processes
-	restore_processes="$(get_tmux_option "$restore_processes_option" "$restore_processes")"
+	restore_processes="$(get_restore_processes_option)"
 	[[ "$restore_processes" != false ]]
 }
 
@@ -71,7 +75,7 @@ _process_should_be_restored() {
 
 _restore_all_processes() {
 	local restore_processes
-	restore_processes="$(get_tmux_option "$restore_processes_option" "$restore_processes")"
+	restore_processes="$(get_restore_processes_option)"
 	[[ "$restore_processes" == ':all:' ]]
 }
 
@@ -146,7 +150,7 @@ _get_proc_restore_command() {
 
 _restore_list() {
 	local user_processes
-	user_processes="$(get_tmux_option "$restore_processes_option" "$restore_processes")"
+	user_processes="$(get_restore_processes_option)"
 
 	local default_processes
 	default_processes="$(get_tmux_option "$default_proc_list_option" "$default_proc_list")"
