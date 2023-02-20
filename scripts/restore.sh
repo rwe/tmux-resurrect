@@ -359,9 +359,7 @@ restore_active_pane_for_window() {
 }
 
 restore_active_pane_for_each_window() {
-	while restore_active_pane_for_window; do
-		:
-	done < <(records-of-type 'pane' || :)
+	each-record 'pane' restore_active_pane_for_window
 }
 
 restore_zoomed_window() {
