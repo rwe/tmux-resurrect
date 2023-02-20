@@ -247,20 +247,19 @@ restore_grouped_session() {
 	done
 }
 
-restore_active_and_alternate_windows_for_grouped_sessions() {
+restore_active_and_alternate_windows_for_grouped_session() {
 	local _line_type grouped_session original_session colon_alternate_window_index colon_active_window_index
+	IFS=$d read _line_type grouped_session original_session colon_alternate_window_index colon_active_window_index || return $?
 
-	while IFS=$d read _line_type grouped_session original_session colon_alternate_window_index colon_active_window_index; do
-		local alternate_window_index active_window_index
-		alternate_window_index="${colon_alternate_window_index#:}"
-		active_window_index="${colon_active_window_index#:}"
-		if [[ -n "$alternate_window_index" ]]; then
-			tmux switch-client -t "${grouped_session}:${alternate_window_index}"
-		fi
-		if [[ -n "$active_window_index" ]]; then
-			tmux switch-client -t "${grouped_session}:${active_window_index}"
-		fi
-	done
+	local alternate_window_index active_window_index
+	alternate_window_index="${colon_alternate_window_index#:}"
+	active_window_index="${colon_active_window_index#:}"
+	if [[ -n "$alternate_window_index" ]]; then
+		tmux switch-client -t "${grouped_session}:${alternate_window_index}"
+	fi
+	if [[ -n "$active_window_index" ]]; then
+		tmux switch-client -t "${grouped_session}:${active_window_index}"
+	fi
 }
 
 never_ever_overwrite() {
@@ -368,7 +367,7 @@ restore_grouped_sessions() {
 
 	while read line; do
 		restore_grouped_session <<< "$line"
-		restore_active_and_alternate_windows_for_grouped_sessions <<< "$line"
+		restore_active_and_alternate_windows_for_grouped_session <<< "$line"
 	done < <(records-of-type 'grouped_session' || :)
 }
 
