@@ -239,6 +239,10 @@ restore_active_and_alternate_session_states() {
 	done
 }
 
+restore_active_and_alternate_sessions() {
+	restore_active_and_alternate_session_states < <(records-of-type 'state' || :)
+}
+
 restore_grouped_session() {
 	local _line_type grouped_session original_session _colon_alternate_window_index _colon_active_window_index
 
@@ -391,10 +395,6 @@ restore_active_and_alternate_windows() {
 	for target in "${alternate_window_targets[@]}" "${active_window_targets[@]}"; do
 		tmux switch-client -t "${target}"
 	done
-}
-
-restore_active_and_alternate_sessions() {
-	restore_active_and_alternate_session_states < <(records-of-type 'state' || :)
 }
 
 # A cleanup that happens after 'restore_all_panes' seems to fix fish shell
