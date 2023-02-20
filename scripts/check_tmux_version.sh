@@ -53,7 +53,7 @@ coerce-int() {
 	echo $(( int ))
 }
 
-main() {
+tmr:check-tmux-version() {
 	local version
 	version="$1"
 
@@ -71,7 +71,8 @@ main() {
 
 	if (( tmux_version_int < supported_version_int )); then
 		display_message "$unsupported_msg"
-		exit 1
+		return 1
 	fi
 }
-main "$@"
+
+[[ "${#BASH_SOURCE[@]}" -ne 1 || "${BASH_SOURCE[0]}" != "${0}" ]] || tmr:check-tmux-version "$@"
