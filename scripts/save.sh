@@ -15,9 +15,7 @@ _grouped_sessions_tmux_fields=(
 	'#{session_name}'
 )
 
-grouped_sessions_tmux_format() {
-	tmr:tmux-fields "${_grouped_sessions_tmux_fields[@]}"
-}
+grouped_sessions_tmux_format="$(tmr:tmux-fields "${_grouped_sessions_tmux_fields[@]}")"
 
 _pane_tmux_fields=(
 	'#{l:pane}'
@@ -34,9 +32,7 @@ _pane_tmux_fields=(
 	'#{history_size}'
 )
 
-pane_tmux_format() {
-	tmr:tmux-fields "${_pane_tmux_fields[@]}"
-}
+pane_tmux_format="$(tmr:tmux-fields "${_pane_tmux_fields[@]}")"
 
 _window_tmux_fields=(
 	'#{l:window}'
@@ -48,9 +44,7 @@ _window_tmux_fields=(
 	'#{window_layout}'
 )
 
-window_tmux_format() {
-	tmr:tmux-fields "${_window_tmux_fields[@]}"
-}
+window_tmux_format="$(tmr:tmux-fields "${_window_tmux_fields[@]}")"
 
 _state_tmux_fields=(
 	'#{l:state}'
@@ -58,16 +52,14 @@ _state_tmux_fields=(
 	'#{client_last_session}'
 )
 
-state_tmux_format() {
-	tmr:tmux-fields "${_state_tmux_fields[@]}"
-}
+state_tmux_format="$(tmr:tmux-fields "${_state_tmux_fields[@]}")"
 
 dump_panes_raw() {
-	tmux list-panes -a -F "$(pane_tmux_format)"
+	tmux list-panes -a -F "${pane_tmux_format}"
 }
 
 dump_windows_raw(){
-	tmux list-windows -a -F "$(window_tmux_format)"
+	tmux list-windows -a -F "${window_tmux_format}"
 }
 
 toggle_window_zoom() {
@@ -144,7 +136,7 @@ dump_grouped_sessions() {
 	local original_session
 	local session_group _session_id session_name
 
-	tmux list-sessions -F "$(grouped_sessions_tmux_format)" |
+	tmux list-sessions -F "${grouped_sessions_tmux_format}" |
 		grep "^1" |
 		cut -c 3- |
 		sort |
@@ -238,7 +230,7 @@ dump_windows() {
 }
 
 dump_state() {
-	tmux display-message -p "$(state_tmux_format)"
+	tmux display-message -p "${state_tmux_format}"
 }
 
 dump_pane_contents() {
