@@ -229,12 +229,6 @@ restore_pane() {
 	tmux select-pane -t "$session_name:$window_index.$pane_index" -T "$pane_title"
 }
 
-restore_panes() {
-	while restore_pane; do
-		:
-	done
-}
-
 restore_active_and_alternate_session_state() {
 	local _line_type client_session client_last_session
 	IFS=$d read _line_type client_session client_last_session || return $?
@@ -301,7 +295,7 @@ restore_all_panes() {
 		pane_content_files_restore_from_archive
 	fi
 
-	restore_panes < <(records-of-type 'pane' || :)
+	each-record 'pane' restore_pane
 }
 
 handle_session_0() {
