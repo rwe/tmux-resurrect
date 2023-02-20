@@ -350,9 +350,7 @@ restore_one_pane_process() {
 restore_all_pane_processes() {
 	restore_pane_processes_enabled || return 0
 
-	while restore_one_pane_process; do
-		:
-	done < <(records-of-type 'pane' || :)
+	each-record 'pane' restore_one_pane_process
 }
 
 restore_active_pane_for_window() {
