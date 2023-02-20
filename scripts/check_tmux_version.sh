@@ -64,15 +64,6 @@ unsupported_version_message() {
 	fi
 }
 
-exit_if_unsupported_version() {
-	local current_version="$1"
-	local supported_version="$2"
-	if [ "$current_version" -lt "$supported_version" ]; then
-		display_message "$(unsupported_version_message)"
-		exit 1
-	fi
-}
-
 main() {
 	local supported_version_int
 	supported_version_int="$(coerce-int "$VERSION")"
@@ -83,6 +74,9 @@ main() {
 	local tmux_version_int
 	tmux_version_int="$(coerce-int "$tmux_version_string")"
 
-	exit_if_unsupported_version "$tmux_version_int" "$supported_version_int"
+	if [ "$tmux_version_int" -lt "$supported_version_int" ]; then
+		display_message "$(unsupported_version_message)"
+		exit 1
+	fi
 }
 main
