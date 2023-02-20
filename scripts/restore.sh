@@ -230,12 +230,17 @@ restore_pane() {
 	done
 }
 
-restore_active_and_alternate_session_states() {
+restore_active_and_alternate_session_state() {
 	local _line_type client_session client_last_session
+	IFS=$d read _line_type client_session client_last_session || return $?
 
-	while IFS=$d read _line_type client_session client_last_session; do
-		tmux switch-client -t "$client_last_session"
-		tmux switch-client -t "$client_session"
+	tmux switch-client -t "$client_last_session"
+	tmux switch-client -t "$client_session"
+}
+
+restore_active_and_alternate_session_states() {
+	while restore_active_and_alternate_session_state; do
+		:
 	done
 }
 
