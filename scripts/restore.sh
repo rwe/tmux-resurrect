@@ -383,9 +383,7 @@ restore_grouped_session_and_windows() {
 }
 
 restore_grouped_sessions() {
-	while restore_grouped_session_and_windows; do
-		:
-	done < <(records-of-type 'grouped_session' || :)
+	each-record 'grouped_session' restore_grouped_session_and_windows
 }
 
 restore_active_and_alternate_windows() {
