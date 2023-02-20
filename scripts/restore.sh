@@ -350,12 +350,17 @@ restore_all_pane_processes() {
 	done < <(records-of-type 'pane' || :)
 }
 
-restore_active_pane_for_each_window() {
+restore_active_pane_for_window() {
 	local _line_type session_name window_index _window_active _colon_window_flags pane_index pane_title _colon_pane_current_path pane_active _pane_current_command _colon_pane_full_command
-	while IFS=$d read _line_type session_name window_index _window_active _colon_window_flags pane_index pane_title _colon_pane_current_path pane_active _pane_current_command _colon_pane_full_command; do
-		[[ "${pane_active}" == 1 ]] || continue
-		tmux switch-client -t "${session_name}:${window_index}"
-		tmux select-pane -t "$pane_index"
+	IFS=$d read _line_type session_name window_index _window_active _colon_window_flags pane_index pane_title _colon_pane_current_path pane_active _pane_current_command _colon_pane_full_command || return $?
+	[[ "${pane_active}" == 1 ]] || return 0
+	tmux switch-client -t "${session_name}:${window_index}"
+	tmux select-pane -t "$pane_index"
+}
+
+restore_active_pane_for_each_window() {
+	while restore_active_pane_for_window; do
+		:
 	done < <(records-of-type 'pane' || :)
 }
 
