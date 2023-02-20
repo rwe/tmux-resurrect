@@ -333,19 +333,25 @@ restore_window_properties() {
 	each-record 'window' restore_window_property
 }
 
+restore_one_pane_process() {
+	local _line_type session_name window_index _window_active _colon_window_flags pane_index _pane_title colon_pane_current_path _pane_active _pane_current_command colon_pane_full_command
+	IFS=$d read _line_type session_name window_index _window_active _colon_window_flags pane_index _pane_title colon_pane_current_path _pane_active _pane_current_command colon_pane_full_command || return $?
+
+	local pane_current_path_goal
+	pane_current_path_goal="${colon_pane_current_path#:}"
+
+	local pane_full_command_goal
+	pane_full_command_goal="${colon_pane_full_command#:}"
+	[[ -n "${pane_full_command_goal}" ]] || return 0
+
+	restore_pane_process "$pane_full_command_goal" "$session_name" "$window_index" "$pane_index" "$pane_current_path_goal"
+}
+
 restore_all_pane_processes() {
 	restore_pane_processes_enabled || return 0
 
-	local _line_type session_name window_index _window_active _colon_window_flags pane_index _pane_title colon_pane_current_path _pane_active _pane_current_command colon_pane_full_command
-	while IFS=$d read _line_type session_name window_index _window_active _colon_window_flags pane_index _pane_title colon_pane_current_path _pane_active _pane_current_command colon_pane_full_command; do
-		local pane_current_path_goal
-		pane_current_path_goal="${colon_pane_current_path#:}"
-
-		local pane_full_command_goal
-		pane_full_command_goal="${colon_pane_full_command#:}"
-		[[ -n "${pane_full_command_goal}" ]] || continue
-
-		restore_pane_process "$pane_full_command_goal" "$session_name" "$window_index" "$pane_index" "$pane_current_path_goal"
+	while restore_one_pane_process; do
+		:
 	done < <(records-of-type 'pane' || :)
 }
 
