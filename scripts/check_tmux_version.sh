@@ -53,13 +53,8 @@ coerce-int() {
 	echo $(( int ))
 }
 
-tmr:check-tmux-version() {
-	local version
-	version="$1"
-
-	local unsupported_msg
-	unsupported_msg="${2:-"Error, Tmux version unsupported! Please install Tmux version $version or greater!"}"
-
+tmr:has-tmux-version() {
+	local version="$1"
 	local supported_version_int
 	supported_version_int="$(coerce-int "$version")"
 
@@ -69,7 +64,17 @@ tmr:check-tmux-version() {
 	local tmux_version_int
 	tmux_version_int="$(coerce-int "$tmux_version_string")"
 
-	if (( tmux_version_int < supported_version_int )); then
+	(( supported_version_int <= tmux_version_int ))
+}
+
+tmr:check-tmux-version() {
+	local version
+	version="$1"
+
+	local unsupported_msg
+	unsupported_msg="${2:-"Error, Tmux version unsupported! Please install Tmux version $version or greater!"}"
+
+	if ! tmr:has-tmux-version "${version}"; then
 		display_message "$unsupported_msg"
 		return 1
 	fi
