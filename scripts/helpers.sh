@@ -98,7 +98,13 @@ is_session_grouped() {
 # pane content file helpers
 
 pane_contents_create_archive() {
-	tar cfz - -C "$(resurrect_dir)/save/" ./pane_contents/ > "$(pane_contents_archive_file)"
+	local archive_file
+	archive_file="$(pane_contents_archive_file)"
+
+	local save_dir
+	save_dir="$(resurrect_dir)/save"
+
+	tar cfz - -C "${save_dir}/" ./pane_contents/ > "${archive_file}"
 }
 
 pane_content_files_restore_from_archive() {
@@ -107,8 +113,14 @@ pane_content_files_restore_from_archive() {
 
 	[[ -f "$archive_file" ]] || return 0
 
-	mkdir -p "$(pane_contents_dir 'restore')"
-	tar xfz - -C "$(resurrect_dir)/restore/" < "${archive_file}"
+	local pane_dir
+	pane_dir="$(pane_contents_dir 'restore')"
+
+	local restore_dir
+	restore_dir="$(resurrect_dir)/restore"
+
+	mkdir -p "${pane_dir}"
+	tar xfz - -C "${restore_dir}/" < "${archive_file}"
 }
 
 # path helpers
@@ -137,31 +149,42 @@ resurrect_dir() {
 new_resurrect_file_path() {
 	local timestamp
 	timestamp="$(date '+%Y%m%dT%H%M%S')"
-	out "$(resurrect_dir)/${RESURRECT_FILE_PREFIX}_${timestamp}.${RESURRECT_FILE_EXTENSION}"
+
+	resurrect_dir
+	out "/${RESURRECT_FILE_PREFIX}_${timestamp}.${RESURRECT_FILE_EXTENSION}"
 }
 
 last_resurrect_file() {
-	out "$(resurrect_dir)/last"
+	resurrect_dir
+	out '/last'
 }
 
 pane_contents_dir() {
 	local save_or_restore="$1"
-	out "$(resurrect_dir)/${save_or_restore}/pane_contents"
+
+	resurrect_dir
+	out "/${save_or_restore}"
+	out '/pane_contents'
 }
 
 pane_contents_file() {
 	local save_or_restore="$1"
 	local pane_id="$2"
-	out "$(pane_contents_dir "$save_or_restore")/pane-${pane_id}"
+
+	pane_contents_dir "$save_or_restore"
+	out "/pane-${pane_id}"
 }
 
 pane_contents_file_exists() {
 	local pane_id="$1"
-	[[ -f "$(pane_contents_file 'restore' "$pane_id")" ]]
+	local file
+	file="$(pane_contents_file 'restore' "$pane_id")"
+	[[ -f "$file" ]]
 }
 
 pane_contents_archive_file() {
-	out "$(resurrect_dir)/pane_contents.tar.gz"
+	resurrect_dir
+	out '/pane_contents.tar.gz'
 }
 
 execute_hook() {
