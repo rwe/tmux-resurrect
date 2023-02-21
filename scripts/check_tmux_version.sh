@@ -42,11 +42,18 @@ display_message() {
 	tmux set-option -gq display-time "$saved_display_time"
 }
 
-# this is used to get "clean" integer version number. Examples:
+# Convert the string argument to an integer. All non-digit characters are
+# removed, and the remaining digits are printed without leading zeros.
+#
+# This is used to get "clean" integer version number. Examples:
 # `tmux 1.9` => `19`
 # `1.9a`     => `19`
-get_digits_from_string() {
-	echo "${1//[^[:digit:]]/}"
+coerce-int() {
+	# The '10#' prefix here ensures the value is interpreted as a decimal number.
+	# This prevents leading zeros from causing an octal interpretaion.
+	local int
+	int="10#${1//[^[:digit:]]/}"
+	echo $(( int ))
 }
 
 unsupported_version_message() {
@@ -68,13 +75,13 @@ exit_if_unsupported_version() {
 
 main() {
 	local supported_version_int
-	supported_version_int="$(get_digits_from_string "$VERSION")"
+	supported_version_int="$(coerce-int "$VERSION")"
 
 	local tmux_version_string
 	tmux_version_string="$(tmux -V)"
 
 	local tmux_version_int
-	tmux_version_int="$(get_digits_from_string "$tmux_version_string")"
+	tmux_version_int="$(coerce-int "$tmux_version_string")"
 
 	exit_if_unsupported_version "$tmux_version_int" "$supported_version_int"
 }
