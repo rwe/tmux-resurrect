@@ -138,8 +138,16 @@ capture_pane_contents() {
 	if [[ "$pane_contents_area" == 'visible' ]]; then
 		start_line=0
 	fi
-	# the printf hack below removes *trailing* empty lines
-	printf '%s\n' "$(tmux capture-pane -epJ -S "$start_line" -t "$pane_id")" > "$(pane_contents_file 'save' "$pane_id")"
+
+	local content_file
+	content_file="$(pane_contents_file 'save' "$pane_id")"
+
+	# capturing to a variable removes *trailing* empty lines.
+	# This is very inefficient if the scrollback is large.
+	local contents
+	contents="$(tmux capture-pane -epJ -S "$start_line" -t "$pane_id")"
+
+	printf '%s\n' "$contents" > "$content_file"
 }
 
 dump_grouped_sessions() {
@@ -306,8 +314,10 @@ remove_old_backups() {
 	# remove resurrect files older than 30 days (default), but keep at least 5 copies of backup.
 	local delete_after
 	delete_after="$(get_tmux_option "$delete_backup_after_option" "$default_delete_backup_after")"
+	local resurrect_dir
+	resurrect_dir="$(resurrect_dir)"
 	local -a files
-	files=($(ls -t "$(resurrect_dir)/${RESURRECT_FILE_PREFIX}_"*".${RESURRECT_FILE_EXTENSION}" | tail -n +6))
+	files=($(ls -t "${resurrect_dir}/${RESURRECT_FILE_PREFIX}_"*".${RESURRECT_FILE_EXTENSION}" | tail -n +6))
 	[[ ${#files[@]} -eq 0 ]] ||
 		find "${files[@]}" -type f -mtime "+${delete_after}" -exec rm -v '{}' ';' > /dev/null
 }
@@ -319,7 +329,10 @@ save_all() {
 	local last_resurrect_file
 	last_resurrect_file="$(last_resurrect_file)"
 
-	mkdir -p "$(resurrect_dir)"
+	local resurrect_dir
+	resurrect_dir="$(resurrect_dir)"
+	mkdir -p "${resurrect_dir}"
+
 	dump_layout > "$resurrect_file_path"
 	execute_hook 'post-save-layout' "$resurrect_file_path"
 	if files_differ "$resurrect_file_path" "$last_resurrect_file"; then
@@ -328,10 +341,13 @@ save_all() {
 		rm "$resurrect_file_path"
 	fi
 	if capture_pane_contents_option_on; then
-		mkdir -p "$(pane_contents_dir 'save')"
+		local content_save_dir
+		content_save_dir="$(pane_contents_dir 'save')"
+
+		mkdir -p "${content_save_dir}"
 		dump_pane_contents
 		pane_contents_create_archive
-		rm "$(pane_contents_dir 'save')"/*
+		rm "${content_save_dir}"/*
 	fi
 	remove_old_backups
 	execute_hook 'post-save-all'
