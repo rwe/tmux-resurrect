@@ -74,7 +74,7 @@ main() {
 	local tmux_version_int
 	tmux_version_int="$(coerce-int "$tmux_version_string")"
 
-	if [ "$tmux_version_int" -lt "$supported_version_int" ]; then
+	if (( tmux_version_int < supported_version_int )); then
 		display_message "$(unsupported_version_message)"
 		exit 1
 	fi
