@@ -128,9 +128,16 @@ tmux_default_command() {
 
 pane_creation_command() {
 	local pane_id="$1"
+
+	local pane_contents
+	pane_contents="$(pane_contents_file 'restore' "$pane_id")"
+
+	local default_command
+	default_command="$(tmux_default_command)"
+
 	# Note that the command itself is a literal shell command, and so is
 	# intentionally spliced with '%s' rather than '%q'.
-	printf 'cat %q; exec %s' "$(pane_contents_file 'restore' "$pane_id")" "$(tmux_default_command)"
+	printf 'cat %q; exec %s' "$pane_contents" "$default_command"
 }
 
 new_window() {
@@ -142,7 +149,10 @@ new_window() {
 new_session() {
 	local session_name="$1" window_index="$2" pane_index="$3" creation_args=("${@:4}")
 
-	TMUX='' tmux -S "$(tmux_socket)" new-session -d -s "$session_name" "${creation_args[@]}"
+	local socket
+	socket="$(tmux_socket)"
+
+	TMUX='' tmux -S "$socket" new-session -d -s "$session_name" "${creation_args[@]}"
 
 	# change first window number if necessary
 	local created_window_index
@@ -234,7 +244,10 @@ restore_grouped_session() {
 	local _line_type grouped_session original_session _colon_alternate_window_index _colon_active_window_index
 	IFS=$d read _line_type grouped_session original_session _colon_alternate_window_index _colon_active_window_index || return $?
 
-	TMUX='' tmux -S "$(tmux_socket)" new-session -d -s "$grouped_session" -t "$original_session"
+	local socket
+	socket="$(tmux_socket)"
+
+	TMUX='' tmux -S "$socket" new-session -d -s "$grouped_session" -t "$original_session"
 }
 
 restore_active_and_alternate_windows_for_grouped_session() {
@@ -423,7 +436,9 @@ restore_active_and_alternate_windows() {
 cleanup_restored_pane_contents() {
 	is_restoring_pane_contents || return 0
 
-	rm "$(pane_contents_dir 'restore')"/*
+	local restore_dir
+	restore_dir="$(pane_contents_dir 'restore')"
+	rm "${restore_dir}"/*
 }
 
 tmr:restore() {
