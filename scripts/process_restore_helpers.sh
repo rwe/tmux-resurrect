@@ -148,17 +148,13 @@ _get_proc_restore_command() {
 }
 
 _restore_list() {
-	local user_processes
-	user_processes="$(get_restore_processes_option)"
+	local default_procs
+	default_procs="$(get_tmux_option "$default_proc_list_option" "$default_proc_list")"
 
-	local default_processes
-	default_processes="$(get_tmux_option "$default_proc_list_option" "$default_proc_list")"
-	if [[ -z "$user_processes" ]]; then
-		# user didn't define any processes
-		outln "$default_processes"
-	else
-		outln "$default_processes $user_processes"
-	fi
+	local user_procs
+	user_procs="$(get_restore_processes_option)"
+
+	outln "$default_procs $user_procs"
 }
 
 _get_inline_strategy() {
