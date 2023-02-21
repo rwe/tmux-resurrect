@@ -94,15 +94,16 @@ pane_has_any_content() {
 	local pane_id="$1"
 
 	# doing "cheap" tests first
+	local history_and_cursor
+	history_and_cursor="$(tmux display -p -t "$pane_id" -F '#{history_size}'"${d}"'#{cursor_y}')"
+
+	local history_size cursor_y
+	IFS="$d" read history_size cursor_y <<< "${history_and_cursor}"
 
 	# history has any content?
-	local history_size
-	history_size="$(tmux display -p -t "$pane_id" -F '#{history_size}')"
 	[[ "$history_size" -le 0 ]] || return 0
 
 	 # cursor not in first line?
-	local cursor_y
-	cursor_y="$(tmux display -p -t "$pane_id" -F '#{cursor_y}')"
 	[[ "$cursor_y" -le 0 ]] || return 0
 
 	local num_lines
