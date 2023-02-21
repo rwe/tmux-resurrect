@@ -135,7 +135,8 @@ last_resurrect_file() {
 }
 
 pane_contents_dir() {
-	echo "$(resurrect_dir)/$1/pane_contents"
+	local save_or_restore="$1"
+	echo "$(resurrect_dir)/${save_or_restore}/pane_contents"
 }
 
 pane_contents_file() {
