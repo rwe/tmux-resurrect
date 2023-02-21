@@ -132,13 +132,14 @@ capture_pane_contents() {
 	local pane_id="$1"
 	local start_line="-$2"
 	local pane_contents_area="$3"
-	if pane_has_any_content "$pane_id"; then
-		if [[ "$pane_contents_area" == 'visible' ]]; then
-			start_line=0
-		fi
-		# the printf hack below removes *trailing* empty lines
-		printf '%s\n' "$(tmux capture-pane -epJ -S "$start_line" -t "$pane_id")" > "$(pane_contents_file 'save' "$pane_id")"
+
+	pane_has_any_content "$pane_id" || return 0
+
+	if [[ "$pane_contents_area" == 'visible' ]]; then
+		start_line=0
 	fi
+	# the printf hack below removes *trailing* empty lines
+	printf '%s\n' "$(tmux capture-pane -epJ -S "$start_line" -t "$pane_id")" > "$(pane_contents_file 'save' "$pane_id")"
 }
 
 dump_grouped_sessions() {
