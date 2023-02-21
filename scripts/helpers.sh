@@ -86,8 +86,7 @@ is_session_grouped() {
 # pane content file helpers
 
 pane_contents_create_archive() {
-	tar cf - -C "$(resurrect_dir)/save/" ./pane_contents/ |
-		gzip > "$(pane_contents_archive_file)"
+	tar cfz - -C "$(resurrect_dir)/save/" ./pane_contents/ > "$(pane_contents_archive_file)"
 }
 
 pane_content_files_restore_from_archive() {
@@ -97,8 +96,7 @@ pane_content_files_restore_from_archive() {
 	[[ -f "$archive_file" ]] || return 0
 
 	mkdir -p "$(pane_contents_dir 'restore')"
-	gzip -d < "$archive_file" |
-		tar xf - -C "$(resurrect_dir)/restore/"
+	tar xfz - -C "$(resurrect_dir)/restore/" < "${archive_file}"
 }
 
 # path helpers
