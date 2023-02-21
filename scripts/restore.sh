@@ -291,12 +291,6 @@ detect_if_restoring_pane_contents() {
 # functions called from main (ordered)
 
 restore_all_panes() {
-	detect_if_restoring_from_scratch   # sets a global variable
-	detect_if_restoring_pane_contents  # sets a global variable
-	if is_restoring_pane_contents; then
-		pane_content_files_restore_from_archive
-	fi
-
 	each-record 'pane' restore_pane
 }
 
@@ -432,8 +426,6 @@ restore_active_and_alternate_windows() {
 # A cleanup that happens after 'restore_all_panes' seems to fix fish shell
 # users' restore problems.
 cleanup_restored_pane_contents() {
-	is_restoring_pane_contents || return 0
-
 	local restore_dir
 	restore_dir="$(pane_contents_dir 'restore')"
 	rm "${restore_dir}"/*
@@ -449,7 +441,14 @@ tmr:restore() {
 
 	start_spinner 'Restoring...' 'Tmux restore complete!'
 	execute_hook 'pre-restore-all'
+
+	detect_if_restoring_from_scratch   # sets a global variable
+	detect_if_restoring_pane_contents  # sets a global variable
+	if is_restoring_pane_contents; then
+		pane_content_files_restore_from_archive
+	fi
 	restore_all_panes < "${resurrect_file}"
+
 	handle_session_0
 	restore_window_properties >/dev/null 2>&1 < "${resurrect_file}"
 	execute_hook 'pre-restore-pane-processes'
@@ -463,7 +462,10 @@ tmr:restore() {
 	restore_grouped_sessions < "${resurrect_file}"
 	restore_active_and_alternate_windows  < "${resurrect_file}"
 	restore_active_and_alternate_sessions < "${resurrect_file}"
-	cleanup_restored_pane_contents
+
+	if is_restoring_pane_contents; then
+		cleanup_restored_pane_contents
+	fi
 	execute_hook 'post-restore-all'
 	stop_spinner
 	display_message 'Tmux restore complete!'
