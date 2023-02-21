@@ -421,9 +421,9 @@ restore_active_and_alternate_windows() {
 # A cleanup that happens after 'restore_all_panes' seems to fix fish shell
 # users' restore problems.
 cleanup_restored_pane_contents() {
-	if is_restoring_pane_contents; then
-		rm "$(pane_contents_dir 'restore')"/*
-	fi
+	is_restoring_pane_contents || return 0
+
+	rm "$(pane_contents_dir 'restore')"/*
 }
 
 tmr:restore() {
