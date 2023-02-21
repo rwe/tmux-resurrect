@@ -92,15 +92,25 @@ number_nonempty_lines_on_screen() {
 # tests if there was any command output in the current pane
 pane_has_any_content() {
 	local pane_id="$1"
+
+	# doing "cheap" tests first
+
+	# history has any content?
 	local history_size
 	history_size="$(tmux display -p -t "$pane_id" -F '#{history_size}')"
+	[[ "$history_size" -le 0 ]] || return 0
 
+	 # cursor not in first line?
 	local cursor_y
 	cursor_y="$(tmux display -p -t "$pane_id" -F '#{cursor_y}')"
-	# doing "cheap" tests first
-	[[ "$history_size" -gt 0 ]] || # history has any content?
-		[[ "$cursor_y" -gt 0 ]] || # cursor not in first line?
-		[[ "$(number_nonempty_lines_on_screen "$pane_id")" -gt 1 ]]
+	[[ "$cursor_y" -le 0 ]] || return 0
+
+	local num_lines
+	num_lines="$(number_nonempty_lines_on_screen "$pane_id")"
+	[[ "$num_lines" -le 1 ]] || return 0
+
+	# No content.
+	return 1
 }
 
 capture_pane_contents() {
