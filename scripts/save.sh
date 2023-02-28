@@ -51,6 +51,13 @@ _state_tmux_fields=(
 
 state_tmux_format="$(tmr:tmux-fields "${_state_tmux_fields[@]}")"
 
+_history_cursor_tmux_fields=(
+	'#{history_size}'
+	'#{cursor_y}'
+)
+
+history_cursor_tmux_format="$(tmr:tmux-fields "${_history_cursor_tmux_fields[@]}")"
+
 dump_panes_raw() {
 	tmux list-panes -a -F "${pane_tmux_format}"
 }
@@ -95,7 +102,7 @@ pane_has_any_content() {
 
 	# doing "cheap" tests first
 	local history_and_cursor
-	history_and_cursor="$(tmux display -p -t "$pane_id" -F '#{history_size}'"${d}"'#{cursor_y}')"
+	history_and_cursor="$(tmux display -p -t "$pane_id" -F "${history_cursor_tmux_format}")"
 
 	local history_size cursor_y
 	IFS="$d" read history_size cursor_y <<< "${history_and_cursor}"
