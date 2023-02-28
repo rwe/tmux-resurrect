@@ -8,7 +8,7 @@
 # When executed, the above will fail. This strategy handles that.
 
 ORIGINAL_COMMAND="$1"
-DIRECTORY="$2"
+# unused: DIRECTORY="$2"
 
 mosh_command() {
 	local args="$ORIGINAL_COMMAND"
