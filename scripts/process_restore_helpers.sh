@@ -102,7 +102,7 @@ _proc_matches_full_command() {
 		[[ "$pane_full_command" == *"${match}"* ]]
 	else
 		# regex matching the command makes sure process is a "word"
-		[[ "$pane_full_command" == "${match} "* ]] || [[ "$pane_full_command" == "${match}" ]]
+		[[ "$pane_full_command" =~ (^"${match}"(["$IFS"]|$)) ]]
 	fi
 }
 
