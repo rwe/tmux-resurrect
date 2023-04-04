@@ -58,39 +58,15 @@ restore_pane_process() {
 	elif ! pane_exists "$session_name" "$window_index" "$pane_index"; then
 		# pane number limit exceeded, pane does not exist
 		return
-	elif ! _process_on_the_restore_list "$pane_full_command_goal"; then
-		return
 	fi
-
-	tmux switch-client -t "${session_name}:${window_index}"
-	tmux select-pane -t "$pane_index"
 
 	local pane_full_command
 	pane_full_command="$(get_pane_restoration_command "$pane_full_command_goal" "$pane_current_path_goal")" || return 0
 	[[ -n "${pane_full_command}" ]] || return 0
 
+	tmux switch-client -t "${session_name}:${window_index}"
+	tmux select-pane -t "$pane_index"
 	tmux send-keys -t "${pane_id}" "$pane_full_command" 'C-m'
-}
-
-_process_on_the_restore_list() {
-	local pane_full_command="$1"
-
-	local procs=()
-	read -r -a procs < <(_restore_list)
-
-	local proc
-	for proc in "${procs[@]}"; do
-		[[ -n "$proc" ]] || continue
-		if [[ "$proc" == ':all:' ]]; then
-			return 0
-		fi
-		local match
-		match="$(_get_proc_match_element "$proc")"
-		if _proc_matches_full_command "$pane_full_command" "$match"; then
-			return 0
-		fi
-	done
-	return 1
 }
 
 _proc_matches_full_command() {
