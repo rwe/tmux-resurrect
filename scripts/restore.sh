@@ -183,6 +183,8 @@ replace_pane() {
 }
 
 restore_pane() {
+	local restore_from_scratch="$1" restore_pane_contents="$2"
+
 	local _line_type session_name window_index _window_active _colon_window_flags pane_index pane_title colon_pane_current_path _pane_active _pane_current_command colon_pane_full_command
 	IFS=$d read _line_type session_name window_index _window_active _colon_window_flags pane_index pane_title colon_pane_current_path _pane_active _pane_current_command colon_pane_full_command || return $?
 
@@ -203,12 +205,12 @@ restore_pane() {
 	pane_id="$(custom_pane_id "${pane_locator[@]}")"
 
 	local pane_args=("${pane_locator[@]}" -c "$pane_current_path_goal")
-	if is_restoring_pane_contents && pane_contents_file_exists "$pane_id"; then
+	if [[ "${restore_pane_contents}" == true ]] && pane_contents_file_exists "$pane_id"; then
 		pane_args+=("$(pane_creation_command "$pane_id")")
 	fi
 
 	if pane_exists "${pane_locator[@]}"; then
-		if is_restoring_from_scratch; then
+		if [[ "${restore_from_scratch}" == true ]]; then
 			# overwrite the pane
 			# happens only for the first pane if it's the only registered pane for the whole tmux server
 			replace_pane "${pane_args[@]}"
@@ -288,11 +290,13 @@ detect_if_restoring_pane_contents() {
 # functions called from main (ordered)
 
 restore_all_panes() {
-	each-record 'pane' restore_pane
+	local restore_from_scratch="$1" restore_pane_contents="$2"
+	each-record 'pane' restore_pane "${restore_from_scratch}" "${restore_pane_contents}"
 }
 
 handle_session_0() {
-	if is_restoring_from_scratch && ! has_restored_session_0; then
+	local restore_from_scratch="$1"
+	if [[ "${restore_from_scratch}" == true ]] && ! has_restored_session_0; then
 		local current_session
 		current_session="$(tmux display -p '#{client_session}')"
 		if [[ "$current_session" == '0' ]]; then
@@ -441,12 +445,22 @@ tmr:restore() {
 
 	detect_if_restoring_from_scratch   # sets a global variable
 	detect_if_restoring_pane_contents  # sets a global variable
+
+	local restore_from_scratch=false
+	if is_restoring_from_scratch; then
+		restore_from_scratch=true
+	fi
+
+	local restore_pane_contents=false
 	if is_restoring_pane_contents; then
+		restore_pane_contents=true
 		pane_content_files_restore_from_archive
 	fi
-	restore_all_panes < "${resurrect_file}"
 
-	handle_session_0
+	restore_all_panes "${restore_from_scratch}" "${restore_pane_contents}" < "${resurrect_file}"
+
+	handle_session_0 "${restore_from_scratch}"
+
 	restore_window_properties >/dev/null 2>&1 < "${resurrect_file}"
 	execute_hook 'pre-restore-pane-processes'
 	if restore_pane_processes_enabled; then
@@ -460,7 +474,7 @@ tmr:restore() {
 	restore_active_and_alternate_windows  < "${resurrect_file}"
 	restore_active_and_alternate_sessions < "${resurrect_file}"
 
-	if is_restoring_pane_contents; then
+	if [[ "${restore_pane_contents}" == true ]]; then
 		cleanup_restored_pane_contents
 	fi
 	execute_hook 'post-restore-all'
