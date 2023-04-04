@@ -11,8 +11,6 @@ source "$CURRENT_DIR/spinner_helpers.sh"
 # is also not restored. That makes the restoration process more idempotent.
 declare -a EXISTING_PANES_VAR
 
-: "${RESTORING_FROM_SCRATCH:=false}"
-: "${RESTORE_PANE_CONTENTS:=false}"
 : "${RESTORED_SESSION_0:=false}"
 
 
@@ -58,22 +56,6 @@ is_pane_registered_as_existing() {
 	local pane_custom_id="$1"
 	local IFS="$d"
 	[[ "${EXISTING_PANES_VAR[*]}" =~ (^|[$IFS])"${pane_custom_id}"([$IFS]|$) ]]
-}
-
-restore_from_scratch_true() {
-	RESTORING_FROM_SCRATCH=true
-}
-
-is_restoring_from_scratch() {
-	[[ "$RESTORING_FROM_SCRATCH" == true ]]
-}
-
-restore_pane_contents_true() {
-	RESTORE_PANE_CONTENTS=true
-}
-
-is_restoring_pane_contents() {
-	[[ "$RESTORE_PANE_CONTENTS" == true ]]
 }
 
 restored_session_0_true() {
@@ -437,13 +419,11 @@ tmr:restore() {
 
 	local restore_from_scratch=false
 	if detect_if_restoring_from_scratch; then
-		restore_from_scratch_true  # sets a global variable
 		restore_from_scratch=true
 	fi
 
 	local restore_pane_contents=false
 	if capture_pane_contents_option_on; then
-		restore_pane_contents_true  # sets a global variable
 		restore_pane_contents=true
 		pane_content_files_restore_from_archive
 	fi
