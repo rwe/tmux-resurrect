@@ -166,6 +166,7 @@ _get_inline_strategy() {
 			match="$(_get_proc_match_element "$proc")"
 			if _proc_matches_full_command "$pane_full_command" "$match"; then
 				_get_proc_restore_command "$pane_full_command" "$proc" "$match"
+				return 0
 			fi
 		fi
 	done
