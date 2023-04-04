@@ -279,10 +279,6 @@ detect_if_restoring_from_scratch() {
 	[[ "$total_number_of_panes" -eq 1 ]]
 }
 
-detect_if_restoring_pane_contents() {
-	capture_pane_contents_option_on
-}
-
 # functions called from main (ordered)
 
 restore_all_panes() {
@@ -446,7 +442,7 @@ tmr:restore() {
 	fi
 
 	local restore_pane_contents=false
-	if detect_if_restoring_pane_contents; then
+	if capture_pane_contents_option_on; then
 		restore_pane_contents_true  # sets a global variable
 		restore_pane_contents=true
 		pane_content_files_restore_from_archive
