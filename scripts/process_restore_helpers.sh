@@ -41,34 +41,6 @@ get_pane_restoration_command() {
 	[[ ${#strategies[@]} -gt 0 ]] && out "${strategies[0]}"
 }
 
-restore_pane_process() {
-	local session_name="$1"
-	local window_index="$2"
-	local pane_index="$3"
-	local pane_current_path_goal="$4"
-	local pane_full_command_goal="$5"
-
-	local pane_id
-	pane_id="$(custom_pane_id "$session_name" "$window_index" "$pane_index")"
-
-	if is_pane_registered_as_existing "$session_name" "$window_index" "$pane_index"; then
-		# Scenario where pane existed before restoration, so we're not
-		# restoring the proces either.
-		return
-	elif ! pane_exists "$session_name" "$window_index" "$pane_index"; then
-		# pane number limit exceeded, pane does not exist
-		return
-	fi
-
-	local pane_full_command
-	pane_full_command="$(get_pane_restoration_command "$pane_full_command_goal" "$pane_current_path_goal")" || return 0
-	[[ -n "${pane_full_command}" ]] || return 0
-
-	tmux switch-client -t "${session_name}:${window_index}"
-	tmux select-pane -t "$pane_index"
-	tmux send-keys -t "${pane_id}" "$pane_full_command" 'C-m'
-}
-
 _proc_matches_full_command() {
 	local pane_full_command="$1"
 	local match="$2"
