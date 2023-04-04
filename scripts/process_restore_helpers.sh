@@ -18,12 +18,12 @@ get_pane_restoration_command() {
 	local pane_full_command_goal="$1"
 	local pane_current_path_goal="$2"
 
-	local inline_strategy
-	inline_strategy="$(_get_inline_strategy "$pane_full_command_goal")" # might not be defined
+	local restored_command
+	restored_command="$(_get_maybe_restored_command "$pane_full_command_goal")" || return
 
 	# Collect non-empty strategies.
 	local s strategies=()
-	for s in "$inline_strategy" "$pane_full_command_goal"; do
+	for s in "$restored_command" "$pane_full_command_goal"; do
 		[[ -n "$s" ]] || continue
 		strategies+=("$s")
 
@@ -58,7 +58,7 @@ restore_pane_process() {
 	elif ! pane_exists "$session_name" "$window_index" "$pane_index"; then
 		# pane number limit exceeded, pane does not exist
 		return
-	elif ! _restore_all_processes && ! _process_on_the_restore_list "$pane_full_command_goal"; then
+	elif ! _process_on_the_restore_list "$pane_full_command_goal"; then
 		return
 	fi
 
@@ -72,12 +72,6 @@ restore_pane_process() {
 	tmux send-keys -t "${pane_id}" "$pane_full_command" 'C-m'
 }
 
-_restore_all_processes() {
-	local restore_processes
-	restore_processes="$(get_restore_processes_option)"
-	[[ "$restore_processes" == ':all:' ]]
-}
-
 _process_on_the_restore_list() {
 	local pane_full_command="$1"
 
@@ -87,6 +81,9 @@ _process_on_the_restore_list() {
 	local proc
 	for proc in "${procs[@]}"; do
 		[[ -n "$proc" ]] || continue
+		if [[ "$proc" == ':all:' ]]; then
+			return 0
+		fi
 		local match
 		match="$(_get_proc_match_element "$proc")"
 		if _proc_matches_full_command "$pane_full_command" "$match"; then
@@ -157,22 +154,44 @@ _restore_list() {
 	outln "$default_procs $user_procs"
 }
 
-_get_inline_strategy() {
+# For the given command, check all of the process list options.
+# If any of them are "inline strategies" (include ` -> `), then this outputs
+# the processed command based on that. If the list includes ':all:', or any
+# element which is a prefix of the command, then the original command is
+# output.
+# Otherwise, 1 is returned.
+_get_maybe_restored_command() {
 	local pane_full_command="$1"
 
 	local procs=()
 	read -r -a procs < <(_restore_list)
 
+	local match_non_inline=
+
 	local proc
 	for proc in "${procs[@]}"; do
-		[[ "$proc" == *"$inline_strategy_token"* ]] || continue
+		[[ -n "$proc" ]] || continue
+		if [[ "$proc" == ':all:' ]]; then
+			match_non_inline=true
+			continue
+		fi
 		local match
 		match="$(_get_proc_match_element "$proc")"
 		if _proc_matches_full_command "$pane_full_command" "$match"; then
-			_get_proc_restore_command "$pane_full_command" "$proc" "$match"
-			return 0
+			if [[ "$proc" == *"$inline_strategy_token"* ]]; then
+				_get_proc_restore_command "$pane_full_command" "$proc" "$match"
+				return 0
+			else
+				match_non_inline=true
+			fi
 		fi
 	done
+
+	if [[ "${match_non_inline}" == true ]]; then
+		outln "${pane_full_command}"
+		return 0
+	fi
+	return 1
 }
 
 _strategy_exists() {
