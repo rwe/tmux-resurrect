@@ -272,19 +272,15 @@ never_ever_overwrite() {
 
 detect_if_restoring_from_scratch() {
 	if never_ever_overwrite; then
-		return
+		return 1
 	fi
 	local total_number_of_panes
 	total_number_of_panes="$(tmux list-panes -a | \grep -c .)"
-	if [[ "$total_number_of_panes" -eq 1 ]]; then
-		restore_from_scratch_true
-	fi
+	[[ "$total_number_of_panes" -eq 1 ]]
 }
 
 detect_if_restoring_pane_contents() {
-	if capture_pane_contents_option_on; then
-		restore_pane_contents_true
-	fi
+	capture_pane_contents_option_on
 }
 
 # functions called from main (ordered)
@@ -443,16 +439,15 @@ tmr:restore() {
 	start_spinner 'Restoring...' 'Tmux restore complete!'
 	execute_hook 'pre-restore-all'
 
-	detect_if_restoring_from_scratch   # sets a global variable
-	detect_if_restoring_pane_contents  # sets a global variable
-
 	local restore_from_scratch=false
-	if is_restoring_from_scratch; then
+	if detect_if_restoring_from_scratch; then
+		restore_from_scratch_true  # sets a global variable
 		restore_from_scratch=true
 	fi
 
 	local restore_pane_contents=false
-	if is_restoring_pane_contents; then
+	if detect_if_restoring_pane_contents; then
+		restore_pane_contents_true  # sets a global variable
 		restore_pane_contents=true
 		pane_content_files_restore_from_archive
 	fi
