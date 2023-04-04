@@ -120,16 +120,6 @@ _get_proc_restore_command() {
 	fi
 }
 
-_restore_list() {
-	local default_procs
-	default_procs="$(get_tmux_option "$default_proc_list_option" "$default_proc_list")"
-
-	local user_procs
-	user_procs="$(get_restore_processes_option)"
-
-	outln "$default_procs $user_procs"
-}
-
 # For the given command, check all of the process list options.
 # If any of them are "inline strategies" (include ` -> `), then this outputs
 # the processed command based on that. If the list includes ':all:', or any
@@ -139,8 +129,14 @@ _restore_list() {
 _get_maybe_restored_command() {
 	local pane_full_command="$1"
 
+	local default_procs
+	default_procs="$(get_tmux_option "$default_proc_list_option" "$default_proc_list")"
+
+	local user_procs
+	user_procs="$(get_restore_processes_option)"
+
 	local procs=()
-	read -r -a procs < <(_restore_list)
+	read -r -a procs <<< "$default_procs $user_procs"
 
 	local match_non_inline=
 
