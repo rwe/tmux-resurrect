@@ -136,6 +136,9 @@ dump_grouped_sessions() {
 	local original_session
 	local session_is_grouped session_group _session_id session_name
 
+	local grouped_sessions
+	grouped_sessions="$(tmux list-sessions -F "${grouped_sessions_tmux_format}" | sort)"
+
 	while IFS=$d read session_is_grouped session_group _session_id session_name; do
 		[[ "${session_is_grouped}" == 1 ]] || continue
 		if [[ "$session_group" != "$current_session_group" ]]; then
@@ -156,7 +159,7 @@ dump_grouped_sessions() {
 			)
 			tmr:fields "${fields[@]}"
 		fi
-	done < <(tmux list-sessions -F "${grouped_sessions_tmux_format}" | sort)
+	done <<< "${grouped_sessions}"
 }
 
 get_grouped_sessions() {
