@@ -1,3 +1,5 @@
+# shellcheck shell=bash
+
 # we want "fixed" dimensions no matter the size of real display
 set_screen_dimensions_helper() {
 	stty cols 200

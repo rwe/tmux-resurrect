@@ -2,8 +2,8 @@
 
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-source $CURRENT_DIR/helpers/helpers.sh
-source $CURRENT_DIR/helpers/resurrect_helpers.sh
+source "$CURRENT_DIR/helpers/helpers.sh"
+source "$CURRENT_DIR/helpers/resurrect_helpers.sh"
 
 setup_before_restore() {
 	# setup restore file
@@ -17,7 +17,7 @@ setup_before_restore() {
 
 restore_tmux_environment_and_save_again() {
 	set_screen_dimensions_helper
-	$CURRENT_DIR/helpers/restore_and_save_tmux_test_environment.exp
+	"$CURRENT_DIR/helpers/restore_and_save_tmux_test_environment.exp"
 }
 
 main() {

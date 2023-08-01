@@ -1,3 +1,8 @@
+# shellcheck shell=bash
+#
+# This file is sourced, so disable "unused variable" warning.
+# shellcheck disable=SC2034
+
 # key bindings
 default_save_key="C-s"
 save_option="@resurrect-save"
