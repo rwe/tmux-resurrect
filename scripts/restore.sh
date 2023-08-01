@@ -6,13 +6,21 @@ source "$CURRENT_DIR/process_restore_helpers.sh"
 source "$CURRENT_DIR/tmux_spinner.sh"
 source "$CURRENT_DIR/check_tmux_version.sh"
 
-# Global variable.
+# Location for in-progress ephemeral state.
 # Used during the restore: if a pane already exists from before, it is
-# saved in the array in this variable. Later, process running in existing pane
+# record as a record in this file. Later, process running in existing pane
 # is also not restored. That makes the restoration process more idempotent.
-declare -a EXISTING_PANES_VAR
+# This file has 'restored-session $session' and 'existing-pane $pane_id' records.
+#
+tmr:state:add() {
+	tmr:fields "$@" >> "${TMR_EPHEMERAL_STATE_PATH?Missing state path}"
+}
 
-: "${RESTORED_SESSION_0:=false}"
+tmr:state:has() {
+	local record
+	record="$(tmr:fields "$@")"
+	grep -qFx "$record" "${TMR_EPHEMERAL_STATE_PATH?Missing state path}"
+}
 
 
 # Filter records by type, where the type is a constant given in the first field
@@ -50,21 +58,20 @@ pane_exists() {
 
 register_existing_pane() {
 	local pane_custom_id="$1"
-	EXISTING_PANES_VAR+=("${pane_custom_id}")
+	tmr:state:add 'existing-pane' "$pane_custom_id"
 }
 
 is_pane_registered_as_existing() {
 	local pane_custom_id="$1"
-	local IFS="$d"
-	[[ "${EXISTING_PANES_VAR[*]}" =~ (^|[$IFS])"${pane_custom_id}"([$IFS]|$) ]]
+	tmr:state:has 'existing-pane' "$pane_custom_id"
 }
 
 restored_session_0_true() {
-	RESTORED_SESSION_0=true
+	tmr:state:add 'restored-session' 0
 }
 
 has_restored_session_0() {
-	[[ "$RESTORED_SESSION_0" == true ]]
+	tmr:state:has 'restored-session' 0
 }
 
 window_exists() {
@@ -431,6 +438,11 @@ tmr:restore() (
 	resurrect_file="$(last_resurrect_file)"
 
 	check_saved_session_exists "${resurrect_file}" || return $?
+
+	local TMR_EPHEMERAL_STATE_PATH
+	TMR_EPHEMERAL_STATE_PATH="$(mktemp)" || return $?
+	atexit rm -f "${TMR_EPHEMERAL_STATE_PATH}"
+	export TMR_EPHEMERAL_STATE_PATH
 
 	tmr:spinner 'Restoring...' 'Tmux restore complete!'&
 	atexit kill $!
