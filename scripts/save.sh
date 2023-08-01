@@ -141,18 +141,6 @@ capture_pane_contents() {
 	fi
 }
 
-get_active_window_index() {
-	local session_name="$1"
-	tmux list-windows -t "$session_name" -F "${window_flag_index_tmux_format}" |
-		awk '$1 ~ /\*/ { print $2; }'
-}
-
-get_alternate_window_index() {
-	local session_name="$1"
-	tmux list-windows -t "$session_name" -F "${window_flag_index_tmux_format}" |
-		awk '$1 ~ /-/ { print $2; }'
-}
-
 dump_grouped_sessions() {
 	local current_session_group=''
 	local original_session
@@ -169,9 +157,21 @@ dump_grouped_sessions() {
 			current_session_group="$session_group"
 		else
 			# this session "points" to the original session
-			local colon_alternate_window_index colon_active_window_index
-			colon_alternate_window_index=":$(get_alternate_window_index "$session_name")"
-			colon_active_window_index=":$(get_active_window_index "$session_name")"
+			local window_flag_indices window_flag window_index
+			window_flag_indices="$(tmux list-windows -t "$session_name" -F "${window_flag_index_tmux_format}")"
+
+			local alternate_window_index='' active_window_index=''
+			while IFS=$d read window_flag window_index; do
+				if [[ "$window_flag" == '*' ]]; then
+					active_window_index="$window_index"
+				elif [[ "$window_flag" == '-' ]]; then
+					alternate_window_index="$window_index"
+				fi
+			done <<< "${window_flag_indices}"
+
+			local colon_active_window_index=":${active_window_index}"
+			local colon_alternate_window_index=":${alternate_window_index}"
+
 			local fields=(
 				'grouped_session'
 				"${session_name}"
