@@ -58,6 +58,13 @@ _history_cursor_tmux_fields=(
 
 history_cursor_tmux_format="$(tmr:tmux-fields "${_history_cursor_tmux_fields[@]}")"
 
+_window_flag_index_tmux_fields=(
+	'#{window_flags}'
+	'#{window_index}'
+)
+
+window_flag_index_tmux_format="$(tmr:tmux-fields "${_window_flag_index_tmux_fields[@]}")"
+
 dump_panes_raw() {
 	tmux list-panes -a -F "${pane_tmux_format}"
 }
@@ -136,13 +143,13 @@ capture_pane_contents() {
 
 get_active_window_index() {
 	local session_name="$1"
-	tmux list-windows -t "$session_name" -F '#{window_flags} #{window_index}' |
+	tmux list-windows -t "$session_name" -F "${window_flag_index_tmux_format}" |
 		awk '$1 ~ /\*/ { print $2; }'
 }
 
 get_alternate_window_index() {
 	local session_name="$1"
-	tmux list-windows -t "$session_name" -F '#{window_flags} #{window_index}' |
+	tmux list-windows -t "$session_name" -F "${window_flag_index_tmux_format}" |
 		awk '$1 ~ /-/ { print $2; }'
 }
 
