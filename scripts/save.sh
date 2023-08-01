@@ -183,6 +183,8 @@ is_session_grouped() {
 # translates pane pid to process command running inside a pane
 dump_panes() {
 	local grouped_session_names=("$@")
+	local raw_panes
+	raw_panes="$(dump_panes_raw)"
 
 	local line_type session_name window_index window_active colon_window_flags pane_index pane_title colon_pane_current_path pane_active pane_current_command pane_pid _history_size
 	while IFS=$d read line_type session_name window_index window_active colon_window_flags pane_index pane_title colon_pane_current_path pane_active pane_current_command pane_pid _history_size; do
@@ -208,11 +210,13 @@ dump_panes() {
 			"${colon_pane_full_command}"
 		)
 		tmr:fields "${fields[@]}"
-	done < <(dump_panes_raw)
+	done <<< "${raw_panes}"
 }
 
 dump_windows() {
 	local grouped_session_names=("$@")
+	local raw_windows
+	raw_windows="$(dump_windows_raw)"
 
 	local line_type session_name window_index colon_window_name window_active colon_window_flags window_layout
 
@@ -238,7 +242,7 @@ dump_windows() {
 			"${automatic_rename}"
 		)
 		tmr:fields "${fields[@]}"
-	done < <(dump_windows_raw)
+	done <<< "${raw_windows}"
 }
 
 dump_state() {
@@ -249,10 +253,13 @@ dump_pane_contents() {
 	local pane_contents_area
 	pane_contents_area="$(get_tmux_option "$pane_contents_area_option" "$default_pane_contents_area")"
 
+	local raw_panes
+	raw_panes="$(dump_panes_raw)"
+
 	local _line_type session_name window_index _window_active _colon_window_flags pane_index _pane_title _colon_pane_current_path _pane_active _pane_current_command _pane_pid history_size
 	while IFS=$d read _line_type session_name window_index _window_active _colon_window_flags pane_index _pane_title _colon_pane_current_path _pane_active _pane_current_command _pane_pid history_size; do
 		capture_pane_contents "${session_name}:${window_index}.${pane_index}" "$history_size" "$pane_contents_area"
-	done < <(dump_panes_raw)
+	done <<< "${raw_panes}"
 }
 
 dump_layout() {
