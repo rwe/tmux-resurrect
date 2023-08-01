@@ -1,89 +1,76 @@
 #!/usr/bin/env bash
 
-CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+: "${CURRENT_DIR:="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"}" || :
 
 source "$CURRENT_DIR/helpers.sh"
 source "$CURRENT_DIR/spinner_helpers.sh"
 
-delimiter=$'\t'
+_grouped_sessions_tmux_fields=(
+	'#{session_grouped}'
+	'#{session_group}'
+	'#{session_id}'
+	'#{session_name}'
+)
 
-# if "quiet" script produces no output
-SCRIPT_OUTPUT="$1"
+grouped_sessions_tmux_format="$(tmr:tmux-fields "${_grouped_sessions_tmux_fields[@]}")"
 
-grouped_sessions_format() {
-	local format
-	format+="#{session_grouped}"
-	format+="${delimiter}"
-	format+="#{session_group}"
-	format+="${delimiter}"
-	format+="#{session_id}"
-	format+="${delimiter}"
-	format+="#{session_name}"
-	echo "$format"
-}
+_pane_tmux_fields=(
+	'#{l:pane}'
+	'#{session_name}'
+	'#{window_index}'
+	'#{window_active}'
+	':#{window_flags}'
+	'#{pane_index}'
+	'#{pane_title}'
+	':#{pane_current_path}'
+	'#{pane_active}'
+	'#{pane_current_command}'
+	'#{pane_pid}'
+	'#{history_size}'
+)
 
-pane_format() {
-	local format
-	format+="pane"
-	format+="${delimiter}"
-	format+="#{session_name}"
-	format+="${delimiter}"
-	format+="#{window_index}"
-	format+="${delimiter}"
-	format+="#{window_active}"
-	format+="${delimiter}"
-	format+=":#{window_flags}"
-	format+="${delimiter}"
-	format+="#{pane_index}"
-	format+="${delimiter}"
-	format+="#{pane_title}"
-	format+="${delimiter}"
-	format+=":#{pane_current_path}"
-	format+="${delimiter}"
-	format+="#{pane_active}"
-	format+="${delimiter}"
-	format+="#{pane_current_command}"
-	format+="${delimiter}"
-	format+="#{pane_pid}"
-	format+="${delimiter}"
-	format+="#{history_size}"
-	echo "$format"
-}
+pane_tmux_format="$(tmr:tmux-fields "${_pane_tmux_fields[@]}")"
 
-window_format() {
-	local format
-	format+="window"
-	format+="${delimiter}"
-	format+="#{session_name}"
-	format+="${delimiter}"
-	format+="#{window_index}"
-	format+="${delimiter}"
-	format+=":#{window_name}"
-	format+="${delimiter}"
-	format+="#{window_active}"
-	format+="${delimiter}"
-	format+=":#{window_flags}"
-	format+="${delimiter}"
-	format+="#{window_layout}"
-	echo "$format"
-}
+_window_tmux_fields=(
+	'#{l:window}'
+	'#{session_name}'
+	'#{window_index}'
+	':#{window_name}'
+	'#{window_active}'
+	':#{window_flags}'
+	'#{window_layout}'
+)
 
-state_format() {
-	local format
-	format+="state"
-	format+="${delimiter}"
-	format+="#{client_session}"
-	format+="${delimiter}"
-	format+="#{client_last_session}"
-	echo "$format"
-}
+window_tmux_format="$(tmr:tmux-fields "${_window_tmux_fields[@]}")"
+
+_state_tmux_fields=(
+	'#{l:state}'
+	'#{client_session}'
+	'#{client_last_session}'
+)
+
+state_tmux_format="$(tmr:tmux-fields "${_state_tmux_fields[@]}")"
+
+_history_cursor_tmux_fields=(
+	'#{history_size}'
+	'#{cursor_y}'
+)
+
+history_cursor_tmux_format="$(tmr:tmux-fields "${_history_cursor_tmux_fields[@]}")"
+
+_window_flag_index_tmux_fields=(
+	'#{window_flags}'
+	'#{window_index}'
+)
+
+window_flag_index_tmux_format="$(tmr:tmux-fields "${_window_flag_index_tmux_fields[@]}")"
 
 dump_panes_raw() {
-	tmux list-panes -a -F "$(pane_format)"
+	tmux list-panes -a -F "${pane_tmux_format}"
 }
 
 dump_windows_raw(){
-	tmux list-windows -a -F "$(window_format)"
+	tmux list-windows -a -F "${window_tmux_format}"
 }
 
 toggle_window_zoom() {
@@ -96,10 +83,10 @@ _save_command_strategy_file() {
 	save_command_strategy="$(get_tmux_option "$save_command_strategy_option" "$default_save_command_strategy")"
 	local strategy_file="$CURRENT_DIR/../save_command_strategies/${save_command_strategy}.sh"
 	local default_strategy_file="$CURRENT_DIR/../save_command_strategies/${default_save_command_strategy}.sh"
-	if [ -e "$strategy_file" ]; then # strategy file exists?
-		echo "$strategy_file"
+	if [[ -e "$strategy_file" ]]; then # strategy file exists?
+		out "$strategy_file"
 	else
-		echo "$default_strategy_file"
+		out "$default_strategy_file"
 	fi
 }
 
@@ -113,131 +100,226 @@ pane_full_command() {
 
 number_nonempty_lines_on_screen() {
 	local pane_id="$1"
-	tmux capture-pane -pJ -t "$pane_id" |
-		sed '/^$/d' |
-		wc -l |
-		sed 's/ //g'
+	tmux capture-pane -pJ -t "$pane_id" | \grep -c .
 }
 
 # tests if there was any command output in the current pane
 pane_has_any_content() {
 	local pane_id="$1"
-	local history_size
-	history_size="$(tmux display -p -t "$pane_id" -F "#{history_size}")"
 
-	local cursor_y
-	cursor_y="$(tmux display -p -t "$pane_id" -F "#{cursor_y}")"
 	# doing "cheap" tests first
-	[ "$history_size" -gt 0 ] || # history has any content?
-		[ "$cursor_y" -gt 0 ] || # cursor not in first line?
-		[ "$(number_nonempty_lines_on_screen "$pane_id")" -gt 1 ]
+	local history_and_cursor
+	history_and_cursor="$(tmux display -p -t "$pane_id" -F "${history_cursor_tmux_format}")"
+
+	local history_size cursor_y
+	tmr:read history_size cursor_y <<< "${history_and_cursor}"
+
+	# history has any content?
+	[[ "$history_size" -le 0 ]] || return 0
+
+	 # cursor not in first line?
+	[[ "$cursor_y" -le 0 ]] || return 0
+
+	local num_lines
+	num_lines="$(number_nonempty_lines_on_screen "$pane_id")"
+	[[ "$num_lines" -le 1 ]] || return 0
+
+	# No content.
+	return 1
 }
 
 capture_pane_contents() {
 	local pane_id="$1"
 	local start_line="-$2"
 	local pane_contents_area="$3"
-	if pane_has_any_content "$pane_id"; then
-		if [ "$pane_contents_area" = "visible" ]; then
-			start_line="0"
-		fi
-		# the printf hack below removes *trailing* empty lines
-		printf '%s\n' "$(tmux capture-pane -epJ -S "$start_line" -t "$pane_id")" > "$(pane_contents_file "save" "$pane_id")"
+
+	pane_has_any_content "$pane_id" || return 0
+
+	if [[ "$pane_contents_area" == 'visible' ]]; then
+		start_line=0
 	fi
-}
 
-get_active_window_index() {
-	local session_name="$1"
-	tmux list-windows -t "$session_name" -F "#{window_flags} #{window_index}" |
-		awk '$1 ~ /\*/ { print $2; }'
-}
+	local content_file
+	content_file="$(pane_contents_file 'save' "$pane_id")"
 
-get_alternate_window_index() {
-	local session_name="$1"
-	tmux list-windows -t "$session_name" -F "#{window_flags} #{window_index}" |
-		awk '$1 ~ /-/ { print $2; }'
+	# capturing to a variable removes *trailing* empty lines.
+	# This is very inefficient if the scrollback is large.
+	local contents
+	contents="$(tmux capture-pane -epJ -S "$start_line" -t "$pane_id")"
+
+	printf '%s\n' "$contents" > "$content_file"
 }
 
 dump_grouped_sessions() {
-	local current_session_group=""
+	local current_session_group=''
 	local original_session
-	tmux list-sessions -F "$(grouped_sessions_format)" |
-		grep "^1" |
-		cut -c 3- |
-		sort |
-		while IFS=$d read session_group session_id session_name; do
-			if [ "$session_group" != "$current_session_group" ]; then
-				# this session is the original/first session in the group
-				original_session="$session_name"
-				current_session_group="$session_group"
-			else
-				# this session "points" to the original session
-				active_window_index="$(get_active_window_index "$session_name")"
-				alternate_window_index="$(get_alternate_window_index "$session_name")"
-				echo "grouped_session${d}${session_name}${d}${original_session}${d}:${alternate_window_index}${d}:${active_window_index}"
-			fi
-		done
+	local session_is_grouped session_group _session_id session_name
+
+	local grouped_sessions
+	grouped_sessions="$(tmux list-sessions -F "${grouped_sessions_tmux_format}" | sort)"
+
+	while tmr:read session_is_grouped session_group _session_id session_name; do
+		[[ "${session_is_grouped}" == 1 ]] || continue
+		if [[ "$session_group" != "$current_session_group" ]]; then
+			# this session is the original/first session in the group
+			original_session="$session_name"
+			current_session_group="$session_group"
+		else
+			# this session "points" to the original session
+			local window_flag_indices window_flag window_index
+			window_flag_indices="$(tmux list-windows -t "$session_name" -F "${window_flag_index_tmux_format}")"
+
+			local alternate_window_index='' active_window_index=''
+			while tmr:read window_flag window_index; do
+				if [[ "$window_flag" == '*' ]]; then
+					active_window_index="$window_index"
+				elif [[ "$window_flag" == '-' ]]; then
+					alternate_window_index="$window_index"
+				fi
+			done <<< "${window_flag_indices}"
+
+			local colon_active_window_index=":${active_window_index}"
+			local colon_alternate_window_index=":${alternate_window_index}"
+
+			local fields=(
+				'grouped_session'
+				"${session_name}"
+				"${original_session}"
+				"${colon_alternate_window_index}"
+				"${colon_active_window_index}"
+			)
+			tmr:fields "${fields[@]}"
+		fi
+	done <<< "${grouped_sessions}"
 }
 
-fetch_and_dump_grouped_sessions(){
-	local grouped_sessions_dump
-	grouped_sessions_dump="$(dump_grouped_sessions)"
-	get_grouped_sessions "$grouped_sessions_dump"
-	if [ -n "$grouped_sessions_dump" ]; then
-		echo "$grouped_sessions_dump"
-	fi
+get_grouped_sessions() {
+	# Reads grouped_session records and outputs tab-separated list of sessions.
+	local _line_type session_name _original_session _colon_alternate_window_index _colon_active_window_index
+	local grouped_session_names=()
+	while tmr:read _line_type session_name _original_session _colon_alternate_window_index _colon_active_window_index; do
+		grouped_session_names+=("${session_name}")
+	done
+	local IFS="$d"
+	outln "${grouped_session_names[*]}"
+}
+
+is_session_grouped() {
+	local session_name="$1"
+	local grouped_session_names=("${@:2}")
+	local IFS="$d"
+	[[ "${grouped_session_names[*]}" =~ (^|[$IFS])"${session_name}"([$IFS]|$) ]]
 }
 
 # translates pane pid to process command running inside a pane
 dump_panes() {
-	local full_command
-	dump_panes_raw |
-		while IFS=$d read line_type session_name window_number window_active window_flags pane_index pane_title dir pane_active pane_command pane_pid history_size; do
-			# not saving panes from grouped sessions
-			if is_session_grouped "$session_name"; then
-				continue
-			fi
-			full_command="$(pane_full_command "$pane_pid")"
-			dir=$(echo "$dir" | sed 's/ /\\ /') # escape all spaces in directory path
-			echo "${line_type}${d}${session_name}${d}${window_number}${d}${window_active}${d}${window_flags}${d}${pane_index}${d}${pane_title}${d}${dir}${d}${pane_active}${d}${pane_command}${d}:${full_command}"
-		done
+	local grouped_session_names=("$@")
+	local raw_panes
+	raw_panes="$(dump_panes_raw)"
+
+	local line_type session_name window_index window_active colon_window_flags pane_index pane_title colon_pane_current_path pane_active pane_current_command pane_pid _history_size
+	while tmr:read line_type session_name window_index window_active colon_window_flags pane_index pane_title colon_pane_current_path pane_active pane_current_command pane_pid _history_size; do
+		# not saving panes from grouped sessions
+		if is_session_grouped "$session_name" "${grouped_session_names[@]}"; then
+			continue
+		fi
+		local colon_pane_full_command
+		colon_pane_full_command=":$(pane_full_command "$pane_pid")"
+		colon_pane_current_path="${colon_pane_current_path// /\\ }" # escape all spaces in directory path
+
+		local fields=(
+			"${line_type}"
+			"${session_name}"
+			"${window_index}"
+			"${window_active}"
+			"${colon_window_flags}"
+			"${pane_index}"
+			"${pane_title}"
+			"${colon_pane_current_path}"
+			"${pane_active}"
+			"${pane_current_command}"
+			"${colon_pane_full_command}"
+		)
+		tmr:fields "${fields[@]}"
+	done <<< "${raw_panes}"
 }
 
 dump_windows() {
-	dump_windows_raw |
-		while IFS=$d read line_type session_name window_index window_name window_active window_flags window_layout; do
-			# not saving windows from grouped sessions
-			if is_session_grouped "$session_name"; then
-				continue
-			fi
-			automatic_rename="$(tmux show-window-options -vt "${session_name}:${window_index}" automatic-rename)"
-			# If the option was unset, use ":" as a placeholder.
-			[ -z "${automatic_rename}" ] && automatic_rename=":"
-			echo "${line_type}${d}${session_name}${d}${window_index}${d}${window_name}${d}${window_active}${d}${window_flags}${d}${window_layout}${d}${automatic_rename}"
-		done
+	local grouped_session_names=("$@")
+	local raw_windows
+	raw_windows="$(dump_windows_raw)"
+
+	local line_type session_name window_index colon_window_name window_active colon_window_flags window_layout
+
+	while tmr:read line_type session_name window_index colon_window_name window_active colon_window_flags window_layout; do
+		# not saving windows from grouped sessions
+		if is_session_grouped "$session_name" "${grouped_session_names[@]}"; then
+			continue
+		fi
+
+		local automatic_rename
+		automatic_rename="$(tmux show-window-options -vt "${session_name}:${window_index}" automatic-rename)"
+		# If the option was unset, use ":" as a placeholder.
+		: "${automatic_rename:=:}"
+
+		local fields=(
+			"${line_type}"
+			"${session_name}"
+			"${window_index}"
+			"${colon_window_name}"
+			"${window_active}"
+			"${colon_window_flags}"
+			"${window_layout}"
+			"${automatic_rename}"
+		)
+		tmr:fields "${fields[@]}"
+	done <<< "${raw_windows}"
 }
 
 dump_state() {
-	tmux display-message -p "$(state_format)"
+	tmux display-message -p "${state_tmux_format}"
 }
 
 dump_pane_contents() {
 	local pane_contents_area
 	pane_contents_area="$(get_tmux_option "$pane_contents_area_option" "$default_pane_contents_area")"
-	dump_panes_raw |
-		while IFS=$d read line_type session_name window_number window_active window_flags pane_index pane_title dir pane_active pane_command pane_pid history_size; do
-			capture_pane_contents "${session_name}:${window_number}.${pane_index}" "$history_size" "$pane_contents_area"
-		done
+
+	local raw_panes
+	raw_panes="$(dump_panes_raw)"
+
+	local _line_type session_name window_index _window_active _colon_window_flags pane_index _pane_title _colon_pane_current_path _pane_active _pane_current_command _pane_pid history_size
+	while tmr:read _line_type session_name window_index _window_active _colon_window_flags pane_index _pane_title _colon_pane_current_path _pane_active _pane_current_command _pane_pid history_size; do
+		capture_pane_contents "${session_name}:${window_index}.${pane_index}" "$history_size" "$pane_contents_area"
+	done <<< "${raw_panes}"
+}
+
+dump_layout() {
+	local grouped_sessions_dump grouped_session_names=()
+	grouped_sessions_dump="$(dump_grouped_sessions)"
+	if [[ -n "$grouped_sessions_dump" ]]; then
+		outln "$grouped_sessions_dump"
+
+		local grouped_session_names_tsv
+		grouped_session_names_tsv="$(get_grouped_sessions <<< "$grouped_sessions_dump")"
+
+		IFS="$d" read -a grouped_session_names <<< "$grouped_session_names_tsv"
+	fi
+
+	dump_panes "${grouped_session_names[@]}"
+	dump_windows "${grouped_session_names[@]}"
+	dump_state
 }
 
 remove_old_backups() {
 	# remove resurrect files older than 30 days (default), but keep at least 5 copies of backup.
 	local delete_after
 	delete_after="$(get_tmux_option "$delete_backup_after_option" "$default_delete_backup_after")"
+	local resurrect_dir
+	resurrect_dir="$(resurrect_dir)"
 	local -a files
-	files=($(ls -t "$(resurrect_dir)/${RESURRECT_FILE_PREFIX}_"*".${RESURRECT_FILE_EXTENSION}" | tail -n +6))
+	files=($(ls -t "${resurrect_dir}/${RESURRECT_FILE_PREFIX}_"*".${RESURRECT_FILE_EXTENSION}" | tail -n +6))
 	[[ ${#files[@]} -eq 0 ]] ||
-		find "${files[@]}" -type f -mtime "+${delete_after}" -exec rm -v "{}" \; > /dev/null
+		find "${files[@]}" -type f -mtime "+${delete_after}" -exec rm -v '{}' ';' > /dev/null
 }
 
 save_all() {
@@ -247,41 +329,42 @@ save_all() {
 	local last_resurrect_file
 	last_resurrect_file="$(last_resurrect_file)"
 
-	mkdir -p "$(resurrect_dir)"
-	fetch_and_dump_grouped_sessions > "$resurrect_file_path"
-	dump_panes   >> "$resurrect_file_path"
-	dump_windows >> "$resurrect_file_path"
-	dump_state   >> "$resurrect_file_path"
-	execute_hook "post-save-layout" "$resurrect_file_path"
+	local resurrect_dir
+	resurrect_dir="$(resurrect_dir)"
+	mkdir -p "${resurrect_dir}"
+
+	dump_layout > "$resurrect_file_path"
+	execute_hook 'post-save-layout' "$resurrect_file_path"
 	if files_differ "$resurrect_file_path" "$last_resurrect_file"; then
 		ln -fs "$(basename "$resurrect_file_path")" "$last_resurrect_file"
 	else
 		rm "$resurrect_file_path"
 	fi
 	if capture_pane_contents_option_on; then
-		mkdir -p "$(pane_contents_dir "save")"
+		local content_save_dir
+		content_save_dir="$(pane_contents_dir 'save')"
+
+		mkdir -p "${content_save_dir}"
 		dump_pane_contents
 		pane_contents_create_archive
-		rm "$(pane_contents_dir "save")"/*
+		rm "${content_save_dir}"/*
 	fi
 	remove_old_backups
-	execute_hook "post-save-all"
+	execute_hook 'post-save-all'
 }
 
-show_output() {
-	[ "$SCRIPT_OUTPUT" != "quiet" ]
-}
+# if first argument is "quiet", script produces no output.
+tmr:save() {
+	supported_tmux_version_ok || return $?
 
-main() {
-	if supported_tmux_version_ok; then
-		if show_output; then
-			start_spinner "Saving..." "Tmux environment saved!"
-		fi
+	if [[ "${1:-}" != 'quiet' ]]; then
+		start_spinner 'Saving...' 'Tmux environment saved!'
 		save_all
-		if show_output; then
-			stop_spinner
-			display_message "Tmux environment saved!"
-		fi
+		stop_spinner
+		display_message 'Tmux environment saved!'
+	else
+		save_all
 	fi
 }
-main
+
+[[ "${#BASH_SOURCE[@]}" -ne 1 || "${BASH_SOURCE[0]}" != "${0}" ]] || tmr:save "$@"
