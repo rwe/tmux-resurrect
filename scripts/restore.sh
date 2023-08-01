@@ -269,15 +269,12 @@ restore_all_panes() {
 }
 
 handle_session_0() {
-	local restore_from_scratch="$1"
-	if [[ "${restore_from_scratch}" == true ]] && ! has_restored_session_0; then
-		local current_session
-		current_session="$(tmux display -p '#{client_session}')"
-		if [[ "$current_session" == '0' ]]; then
-			tmux switch-client -n
-		fi
-		tmux kill-session -t '0'
+	local current_session
+	current_session="$(tmux display -p '#{client_session}')"
+	if [[ "$current_session" == '0' ]]; then
+		tmux switch-client -n
 	fi
+	tmux kill-session -t '0'
 }
 
 restore_window_property() {
@@ -430,7 +427,9 @@ tmr:restore() {
 
 	restore_all_panes "${restore_from_scratch}" "${restore_pane_contents}" < "${resurrect_file}"
 
-	handle_session_0 "${restore_from_scratch}"
+	if [[ "${restore_from_scratch}" == true ]] && ! has_restored_session_0; then
+		handle_session_0
+	fi
 
 	restore_window_properties >/dev/null 2>&1 < "${resurrect_file}"
 	execute_hook 'pre-restore-pane-processes'
