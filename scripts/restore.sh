@@ -432,9 +432,8 @@ tmr:restore() (
 
 	check_saved_session_exists "${resurrect_file}" || return $?
 
-	local spinner_pid
 	tmr:spinner 'Restoring...' 'Tmux restore complete!'&
-	spinner_pid=$!
+	atexit kill $!
 
 	execute_hook 'pre-restore-all'
 
@@ -473,7 +472,6 @@ tmr:restore() (
 	fi
 	execute_hook 'post-restore-all'
 
-	kill $spinner_pid
 	display_message 'Tmux restore complete!'
 )
 
