@@ -406,7 +406,25 @@ cleanup_restored_pane_contents() {
 
 _min_supported_tmux_=1.9
 
-tmr:restore() {
+# NOTE: this is a subshell in order to provide traps without interfering with
+# parent-shell traps.
+tmr:restore() (
+	local _atexit_exprs=(:)
+	# shellcheck disable=SC2317
+	_run_atexit() {
+		trap - EXIT SIGINT SIGTERM
+		local _status="$1" && shift
+		while (( $# )); do
+			eval "$1" || _status=$?
+			shift
+		done
+		exit "$_status"
+	}
+	trap '_run_atexit $? "${_atexit_exprs[@]}"' EXIT SIGINT SIGTERM
+
+	# Add a command to be executed on EXIT, in LIFO order.
+	atexit() { _atexit_exprs=("$(printf '%q ' "$@")" "${_atexit_exprs[@]}"); }
+
 	tmr:check-tmux-version "${_min_supported_tmux_}" || return $?
 
 	local resurrect_file
@@ -457,6 +475,6 @@ tmr:restore() {
 
 	kill $spinner_pid
 	display_message 'Tmux restore complete!'
-}
+)
 
 [[ "${#BASH_SOURCE[@]}" -ne 1 || "${BASH_SOURCE[0]}" != "${0}" ]] || tmr:restore "$@"
