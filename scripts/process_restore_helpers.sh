@@ -28,9 +28,8 @@ get_pane_restoration_command() {
 		strategies+=("$s")
 
 		# check for additional "expansion" of inline strategy, e.g. `vim` to `vim -S`
-		if _strategy_exists "$s"; then
-			local strategy_file
-			strategy_file="$(_get_strategy_file "$s")"
+		local strategy_file
+		if strategy_file="$(_get_strategy_file "$s")" && [[ -r "${strategy_file}" ]]; then
 			"$strategy_file" "$pane_full_command_goal" "$pane_current_path_goal"
 			return
 		fi
@@ -138,21 +137,6 @@ _get_maybe_restored_command() {
 	return 1
 }
 
-_strategy_exists() {
-	local pane_full_command="$1"
-	[[ -n "$pane_full_command" ]] || return 1
-
-	# strategy set?
-	local strategy
-	strategy="$(_get_command_strategy "$pane_full_command")"
-	[[ -n "$strategy" ]] || return 1
-
-	# strategy file exists?
-	local strategy_file
-	strategy_file="$(_get_strategy_file "$pane_full_command")"
-	[[ -e "$strategy_file" ]] || return 1
-}
-
 _get_command_strategy() {
 	local pane_full_command="$1"
 	local command
@@ -167,9 +151,15 @@ _just_command() {
 
 _get_strategy_file() {
 	local pane_full_command="$1"
+	[[ -n "$pane_full_command" ]] || return 1
+
+	# strategy set?
 	local strategy
 	strategy="$(_get_command_strategy "$pane_full_command")"
+	[[ -n "$strategy" ]] || return 1
+
 	local command
 	command="$(_just_command "$pane_full_command")"
+
 	out "$CURRENT_DIR/../strategies/${command}_${strategy}.sh"
 }
