@@ -29,5 +29,5 @@ Currently the following hooks are supported:
 Here is an example how to save and restore window geometry for most terminals in X11.
 Add this to `.tmux.conf`:
 
-    set -g @resurrect-hook-post-save-all 'eval "$(xdotool getwindowgeometry --shell "$WINDOWID")"; echo "0,$X,$Y,$WIDTH,$HEIGHT" > "$HOME/.tmux/resurrect/geometry"'
-    set -g @resurrect-hook-pre-restore-all 'wmctrl -i -r "$WINDOWID" -e "$(cat "$HOME/.tmux/resurrect/geometry")"'
+    set -g @resurrect-hook-post-save-all 'eval "$(xdotool getwindowgeometry --shell "$WINDOWID")" && echo "0,$X,$Y,$WIDTH,$HEIGHT" > "$HOME/.tmux/resurrect/geometry"'
+    set -g @resurrect-hook-pre-restore-all 'wmctrl -i -r "$WINDOWID" -e "$(< "$HOME/.tmux/resurrect/geometry")"'

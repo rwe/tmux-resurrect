@@ -11,10 +11,8 @@ exit_safely_if_empty_ppid() {
 }
 
 full_command() {
-	ps -ao "ppid,args" |
-		sed "s/^ *//" |
-		grep "^${PANE_PID}" |
-		cut -d' ' -f2-
+	ps -ao 'ppid=,command=' |
+		sed -n 's/^[[:space:]]*'"${PANE_PID}"'[[:space:]]\{1,\}//p'
 }
 
 main() {

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -Eeu -o pipefail
 
 # "vim session strategy"
 #
@@ -10,12 +11,12 @@ ORIGINAL_COMMAND="$1"
 DIRECTORY="$2"
 
 vim_session_file_exists() {
-	[ -e "${DIRECTORY}/Session.vim" ]
+	[[ -e "${DIRECTORY}/Session.vim" ]]
 }
 
 main() {
 	if vim_session_file_exists; then
-		echo "vim -S"
+		echo 'vim -S'
 	else
 		echo "$ORIGINAL_COMMAND"
 	fi

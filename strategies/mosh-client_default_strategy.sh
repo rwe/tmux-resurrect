@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -Eeu -o pipefail
 
 # "mosh-client default strategy"
 #
@@ -8,7 +9,7 @@
 # When executed, the above will fail. This strategy handles that.
 
 ORIGINAL_COMMAND="$1"
-DIRECTORY="$2"
+# unused: DIRECTORY="$2"
 
 mosh_command() {
 	local args="$ORIGINAL_COMMAND"
@@ -20,6 +21,6 @@ mosh_command() {
 }
 
 main() {
-	echo "$(mosh_command)"
+	mosh_command
 }
 main

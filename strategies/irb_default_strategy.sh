@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -Eeu -o pipefail
 
 # "irb default strategy"
 #
@@ -8,16 +9,17 @@
 # When executed, the above will fail. This strategy handles that.
 
 ORIGINAL_COMMAND="$1"
-DIRECTORY="$2"
+# unused: DIRECTORY="$2"
 
 original_command_wo_junk_vars() {
-	echo "$ORIGINAL_COMMAND" |
-		sed 's/RBENV_VERSION[^ ]*//' |
-		sed 's/GREP_COLOR[^ ]*//'    |
-		sed 's/TERM_PROGRAM[^ ]*//'
+	local command="${ORIGINAL_COMMAND}"
+	command="${command//RBENV_VERSION[^ ]*/}"
+	command="${command//GREP_COLOR[^ ]*/}"
+	command="${command//TERM_PROGRAM[^ ]*/}"
+	printf '%s\n' "${command}"
 }
 
 main() {
-	echo "$(original_command_wo_junk_vars)"
+	original_command_wo_junk_vars
 }
 main

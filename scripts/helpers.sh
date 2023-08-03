@@ -4,31 +4,85 @@
 
 source "${CURRENT_DIR}/variables.sh"
 
-if [ -d "$HOME/.tmux/resurrect" ]; then
-	default_resurrect_dir="$HOME/.tmux/resurrect"
-else
-	default_resurrect_dir="${XDG_DATA_HOME:-"${HOME}/.local/share"}"/tmux/resurrect
-fi
-resurrect_dir_option="@resurrect-dir"
-
-SUPPORTED_VERSION="1.9"
-RESURRECT_FILE_PREFIX="tmux_resurrect"
-RESURRECT_FILE_EXTENSION="txt"
-_RESURRECT_DIR=""
-_RESURRECT_FILE_PATH=""
+SUPPORTED_VERSION=1.9
+RESURRECT_FILE_PREFIX=tmux_resurrect
+RESURRECT_FILE_EXTENSION=txt
 
 d=$'\t'
+
+# Convert the string argument to an integer. All non-digit characters are
+# removed, and the remaining digits are printed without leading zeros.
+coerce-int() {
+	# The '10#' prefix here ensures the value is interpreted as a decimal number.
+	# This prevents leading zeros from causing an octal interpretaion.
+	local int
+	int="10#${1//[^[:digit:]]/}"
+	echo $(( int ))
+}
+
+# 'echo' has some dangerous edge cases due to how it parses flags.
+# For example, `echo "$foo"` will output nothing if `foo='-e'`.
+# This makes it brittle to use in the context of arbitrary expansions.
+# These helpers print their arguments literally, making them composable.
+
+# Output zero or more literal strings.
+# If more than one argument is provided, they are joined on IFS.
+out() { printf '%s' "$*"; }
+
+# Output zero or more literal strings terminated by newlines.
+outln() { printf '%s\n' "$@"; }
+
+tmr:fields() {
+	local IFS="$d"
+	outln "$*"
+}
+
+tmr:tmux-fields() {
+	# Render a sequence of tmux fields joind on tab.
+	tmr:fields "$@"
+}
+
+# Parse a single tab-delimited, escaped record into fields named by the given args.
+tmr:read() {
+	# The var names given in our arguments are set to those raw field values.
+	IFS="$d" read "$@"
+}
+
+# Cached value of the integer digits of $(tmux -V).
+tmr:tmux-version() {
+	if [[ -z "${TMUX_VERSION_INT+x}" ]]; then
+		local tmux_version_string
+		tmux_version_string="$(tmux -V)"
+
+		TMUX_VERSION_INT="$(coerce-int "$tmux_version_string")"
+	fi
+	echo "${TMUX_VERSION_INT}"
+}
+
+tmr:has-tmux-version() {
+	local version="$1"
+	local supported_version_int
+	supported_version_int="$(coerce-int "$version")"
+
+	local tmux_version_int
+	tmux_version_int="$(tmr:tmux-version)"
+
+	(( supported_version_int <= tmux_version_int ))
+}
 
 # helper functions
 get_tmux_option() {
 	local option="$1"
-	local default_value="$2"
-	local option_value
-	option_value=$(tmux show-option -gqv "$option")
-	if [ -z "$option_value" ]; then
-		echo "$default_value"
+	local option_value status=0
+	option_value=$(tmux show-option -gv "$option" 2>/dev/null) || status=$?
+	if [[ $status -eq 0 ]]; then
+		out "$option_value"
+	elif [[ $status -eq 1 && $# -eq 2 ]]; then
+		local default_value="$2"
+		out "$default_value"
 	else
-		echo "$option_value"
+		# Some other failure.
+		return $status
 	fi
 }
 
@@ -39,15 +93,25 @@ display_message() {
 
 	# display_duration defaults to 5 seconds, if not passed as an argument
 	local display_duration
-	if [ "$#" -eq 2 ]; then
-		display_duration="$2"
-	else
-		display_duration="5000"
+	display_duration="${2:-5000}"
+
+	if ! tmr:has-tmux-version 3.2; then
+		_tmr:tmux-le-31:display_message "${message}" "${display_duration}"
+		return
 	fi
 
-	# saves user-set 'display-time' option
+	tmux display-message -d "${display_duration}" "${message}"
+}
+
+# Display a message for tmux <3.2 by temporarily setting and restoring 'display-time'.
+_tmr:tmux-le-31:display_message() {
+	local message="$1" display_duration="$2"
+
+	# saves user-set 'display-time' option, if one was set
 	local saved_display_time
-	saved_display_time=$(get_tmux_option "display-time" "750")
+	if ! saved_display_time="$(get_tmux_option 'display-time')"; then
+		unset saved_display_time
+	fi
 
 	# sets message display time to 5 seconds
 	tmux set-option -gq display-time "$display_duration"
@@ -55,8 +119,10 @@ display_message() {
 	# displays message
 	tmux display-message "$message"
 
-	# restores original 'display-time' value
-	tmux set-option -gq display-time "$saved_display_time"
+	# restores original 'display-time' value, if one existed.
+	if [[ -n "${saved_display_time+x}" ]]; then
+		tmux set-option -gq display-time "$saved_display_time"
+	fi
 }
 
 
@@ -65,13 +131,13 @@ supported_tmux_version_ok() {
 }
 
 remove_first_char() {
-	echo "$1" | cut -c2-
+	out "${1:1}"
 }
 
 capture_pane_contents_option_on() {
 	local option
-	option="$(get_tmux_option "$pane_contents_option" "off")"
-	[ "$option" == "on" ]
+	option="$(get_tmux_option "$pane_contents_option" off)"
+	[[ "$option" == on ]]
 }
 
 files_differ() {
@@ -92,82 +158,104 @@ is_session_grouped() {
 # pane content file helpers
 
 pane_contents_create_archive() {
-	tar cf - -C "$(resurrect_dir)/save/" ./pane_contents/ |
-		gzip > "$(pane_contents_archive_file)"
+	local archive_file
+	archive_file="$(pane_contents_archive_file)"
+
+	local save_dir
+	save_dir="$(resurrect_dir)/save"
+
+	tar cfz - -C "${save_dir}/" ./pane_contents/ > "${archive_file}"
 }
 
 pane_content_files_restore_from_archive() {
 	local archive_file
 	archive_file="$(pane_contents_archive_file)"
-	if [ -f "$archive_file" ]; then
-		mkdir -p "$(pane_contents_dir "restore")"
-		gzip -d < "$archive_file" |
-			tar xf - -C "$(resurrect_dir)/restore/"
-	fi
+
+	[[ -f "$archive_file" ]] || return 0
+
+	local pane_dir
+	pane_dir="$(pane_contents_dir 'restore')"
+
+	local restore_dir
+	restore_dir="$(resurrect_dir)/restore"
+
+	mkdir -p "${pane_dir}"
+	tar xfz - -C "${restore_dir}/" < "${archive_file}"
 }
 
 # path helpers
 
-resurrect_dir() {
-	if [ -z "$_RESURRECT_DIR" ]; then
-		local path
-		path="$(get_tmux_option "$resurrect_dir_option" "$default_resurrect_dir")"
+get_resurrect_dir_opt() {
+	local path
+	path="$(get_tmux_option "$resurrect_dir_option" '')"
+	if [[ -n "${path}" ]]; then
 		# expands tilde, $HOME and $HOSTNAME if used in @resurrect-dir
-		echo "$path" | sed "s,\$HOME,$HOME,g; s,\$HOSTNAME,$(hostname),g; s,\~,$HOME,g"
+		path="${path//\~/$HOME}"
+		path="${path//\$HOME/$HOME}"
+		path="${path//\$HOSTNAME/$(hostname)}"
+	elif [[ -d "$HOME/.tmux/resurrect" ]]; then
+		path="$HOME/.tmux/resurrect"
 	else
-		echo "$_RESURRECT_DIR"
+		path="${XDG_DATA_HOME:-"${HOME}/.local/share"}"/tmux/resurrect
 	fi
+	out "${path}"
 }
-_RESURRECT_DIR="$(resurrect_dir)"
 
-resurrect_file_path() {
-	if [ -z "$_RESURRECT_FILE_PATH" ]; then
-		local timestamp
-		timestamp="$(date +"%Y%m%dT%H%M%S")"
-		echo "$(resurrect_dir)/${RESURRECT_FILE_PREFIX}_${timestamp}.${RESURRECT_FILE_EXTENSION}"
-	else
-		echo "$_RESURRECT_FILE_PATH"
-	fi
+resurrect_dir() {
+	[[ -n "${_RESURRECT_DIR+x}" ]] || _RESURRECT_DIR="$(get_resurrect_dir_opt)"
+	out "${_RESURRECT_DIR}"
 }
-_RESURRECT_FILE_PATH="$(resurrect_file_path)"
+
+new_resurrect_file_path() {
+	local timestamp
+	timestamp="$(date '+%Y%m%dT%H%M%S')"
+
+	resurrect_dir
+	out "/${RESURRECT_FILE_PREFIX}_${timestamp}.${RESURRECT_FILE_EXTENSION}"
+}
 
 last_resurrect_file() {
-	echo "$(resurrect_dir)/last"
+	resurrect_dir
+	out '/last'
 }
 
 pane_contents_dir() {
-	echo "$(resurrect_dir)/$1/pane_contents/"
+	local save_or_restore="$1"
+
+	resurrect_dir
+	out "/${save_or_restore}"
+	out '/pane_contents'
 }
 
 pane_contents_file() {
 	local save_or_restore="$1"
 	local pane_id="$2"
-	echo "$(pane_contents_dir "$save_or_restore")/pane-${pane_id}"
+
+	pane_contents_dir "$save_or_restore"
+	out "/pane-${pane_id}"
 }
 
 pane_contents_file_exists() {
 	local pane_id="$1"
-	[ -f "$(pane_contents_file "restore" "$pane_id")" ]
+	local file
+	file="$(pane_contents_file 'restore' "$pane_id")"
+	[[ -f "$file" ]]
 }
 
 pane_contents_archive_file() {
-	echo "$(resurrect_dir)/pane_contents.tar.gz"
+	resurrect_dir
+	out '/pane_contents.tar.gz'
 }
 
 execute_hook() {
 	local kind="$1"
 	shift
-	local args="" hook=""
 
-	hook=$(get_tmux_option "$hook_prefix$kind" "")
+	local hook
+	hook="$(get_tmux_option "$hook_prefix$kind" '')"
+	[[ -n "$hook" ]] || return 0
 
-	# If there are any args, pass them to the hook (in a way that preserves/copes
+	# If there are any args, pass them to the hook in a way that preserves/copes
 	# with spaces and unusual characters.
-	if [ "$#" -gt 0 ]; then
-		printf -v args "%q " "$@"
-	fi
-
-	if [ -n "$hook" ]; then
-		eval "$hook $args"
-	fi
+	eval "$hook$(printf ' %q' "$@")"
 }
