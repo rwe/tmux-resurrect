@@ -35,9 +35,11 @@ display_message() {
 	local display_duration
 	display_duration="${2:-5000}"
 
-	# saves user-set 'display-time' option
+	# saves user-set 'display-time' option, if one was set
 	local saved_display_time
-	saved_display_time=$(get_tmux_option "display-time" "750")
+	if ! saved_display_time="$(get_tmux_option "display-time")"; then
+		unset saved_display_time
+	fi
 
 	# sets message display time to 5 seconds
 	tmux set-option -gq display-time "$display_duration"
@@ -45,8 +47,10 @@ display_message() {
 	# displays message
 	tmux display-message "$message"
 
-	# restores original 'display-time' value
-	tmux set-option -gq display-time "$saved_display_time"
+	# restores original 'display-time' value, if one existed.
+	if [[ -n "${saved_display_time+x}" ]]; then
+		tmux set-option -gq display-time "$saved_display_time"
+	fi
 }
 
 
