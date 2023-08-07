@@ -10,6 +10,16 @@ RESURRECT_FILE_EXTENSION=txt
 
 d=$'\t'
 
+# Convert the string argument to an integer. All non-digit characters are
+# removed, and the remaining digits are printed without leading zeros.
+coerce-int() {
+	# The '10#' prefix here ensures the value is interpreted as a decimal number.
+	# This prevents leading zeros from causing an octal interpretaion.
+	local int
+	int="10#${1//[^[:digit:]]/}"
+	echo $(( int ))
+}
+
 # 'echo' has some dangerous edge cases due to how it parses flags.
 # For example, `echo "$foo"` will output nothing if `foo='-e'`.
 # This makes it brittle to use in the context of arbitrary expansions.
@@ -36,6 +46,28 @@ tmr:tmux-fields() {
 tmr:read() {
 	# The var names given in our arguments are set to those raw field values.
 	IFS="$d" read "$@"
+}
+
+# Cached value of the integer digits of $(tmux -V).
+tmr:tmux-version() {
+	if [[ -z "${TMUX_VERSION_INT+x}" ]]; then
+		local tmux_version_string
+		tmux_version_string="$(tmux -V)"
+
+		TMUX_VERSION_INT="$(coerce-int "$tmux_version_string")"
+	fi
+	echo "${TMUX_VERSION_INT}"
+}
+
+tmr:has-tmux-version() {
+	local version="$1"
+	local supported_version_int
+	supported_version_int="$(coerce-int "$version")"
+
+	local tmux_version_int
+	tmux_version_int="$(tmr:tmux-version)"
+
+	(( supported_version_int <= tmux_version_int ))
 }
 
 # helper functions
