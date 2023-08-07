@@ -95,6 +95,18 @@ display_message() {
 	local display_duration
 	display_duration="${2:-5000}"
 
+	if ! tmr:has-tmux-version 3.2; then
+		_tmr:tmux-le-31:display_message "${message}" "${display_duration}"
+		return
+	fi
+
+	tmux display-message -d "${display_duration}" "${message}"
+}
+
+# Display a message for tmux <3.2 by temporarily setting and restoring 'display-time'.
+_tmr:tmux-le-31:display_message() {
+	local message="$1" display_duration="$2"
+
 	# saves user-set 'display-time' option, if one was set
 	local saved_display_time
 	if ! saved_display_time="$(get_tmux_option 'display-time')"; then
