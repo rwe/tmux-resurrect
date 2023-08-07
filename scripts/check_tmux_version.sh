@@ -53,16 +53,24 @@ coerce-int() {
 	echo $(( int ))
 }
 
+# Cached value of the integer digits of $(tmux -V).
+tmr:tmux-version() {
+	if [[ -z "${TMUX_VERSION_INT+x}" ]]; then
+		local tmux_version_string
+		tmux_version_string="$(tmux -V)"
+
+		TMUX_VERSION_INT="$(coerce-int "$tmux_version_string")"
+	fi
+	echo "${TMUX_VERSION_INT}"
+}
+
 tmr:has-tmux-version() {
 	local version="$1"
 	local supported_version_int
 	supported_version_int="$(coerce-int "$version")"
 
-	local tmux_version_string
-	tmux_version_string="$(tmux -V)"
-
 	local tmux_version_int
-	tmux_version_int="$(coerce-int "$tmux_version_string")"
+	tmux_version_int="$(tmr:tmux-version)"
 
 	(( supported_version_int <= tmux_version_int ))
 }
