@@ -358,21 +358,25 @@ save_all() {
 _min_supported_tmux_=1.9
 
 # if first argument is "quiet", script produces no output.
-tmr:save() {
+tmr:save() (
 	tmr:check-tmux-version "${_min_supported_tmux_}" || return $?
 
 	if [[ "${1:-}" != 'quiet' ]]; then
 		local spinner_pid
+		# shellcheck disable=SC2317
+		_cleanup() {
+			local _status="$1"
+			trap - EXIT SIGINT SIGTERM
+			[[ -z "$spinner_pid" ]] || kill "$spinner_pid"
+			exit "$_status"
+		}
+		trap '_cleanup $?' EXIT SIGINT SIGTERM
+
 		tmr:spinner 'Saving...' 'Tmux environment saved!'&
 		spinner_pid=$!
-
-		save_all
-
-		kill $spinner_pid
-		display_message 'Tmux environment saved!'
-	else
-		save_all
 	fi
-}
+
+	save_all
+)
 
 [[ "${#BASH_SOURCE[@]}" -ne 1 || "${BASH_SOURCE[0]}" != "${0}" ]] || tmr:save "$@"
