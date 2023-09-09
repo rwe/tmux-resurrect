@@ -201,14 +201,14 @@ get_grouped_sessions() {
 	while tmr:read _line_type session_name _original_session _colon_alternate_window_index _colon_active_window_index; do
 		grouped_session_names+=("${session_name}")
 	done
-	local IFS="$d"
+	local IFS="${TMR_FIELD_SEP}"
 	outln "${grouped_session_names[*]}"
 }
 
 is_session_grouped() {
 	local session_name="$1"
 	local grouped_session_names=("${@:2}")
-	local IFS="$d"
+	local IFS="${TMR_FIELD_SEP}"
 	[[ "${grouped_session_names[*]}" =~ (^|[$IFS])"${session_name}"([$IFS]|$) ]]
 }
 
@@ -304,7 +304,7 @@ dump_layout() {
 		local grouped_session_names_tsv
 		grouped_session_names_tsv="$(get_grouped_sessions <<< "$grouped_sessions_dump")"
 
-		IFS="$d" read -r -a grouped_session_names <<< "$grouped_session_names_tsv"
+		IFS="${TMR_FIELD_SEP}" read -r -a grouped_session_names <<< "$grouped_session_names_tsv"
 	fi
 
 	dump_panes "${grouped_session_names[@]}"

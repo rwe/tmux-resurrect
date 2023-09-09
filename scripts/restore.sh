@@ -20,7 +20,7 @@ declare -a EXISTING_PANES_VAR
 records-of-type() {
 	local record_type="$1"
 	# Filter with grep, but only fail on real errors, not "no matches" (status 1).
-	\grep "^${record_type}${d}" || [[ $? -eq 1 ]]
+	\grep "^${record_type}${TMR_FIELD_SEP}" || [[ $? -eq 1 ]]
 }
 
 each-record() {

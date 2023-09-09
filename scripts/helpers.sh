@@ -7,8 +7,6 @@ source "${CURRENT_DIR}/variables.sh"
 RESURRECT_FILE_PREFIX=tmux_resurrect
 RESURRECT_FILE_EXTENSION=txt
 
-d=$'\t'
-
 # Convert the string argument to an integer. All non-digit characters are
 # removed, and the remaining digits are printed without leading zeros.
 coerce-int() {
@@ -40,6 +38,9 @@ escape_field() {
 	f="${f//$'\n'/\\n}" # represent newlines as "\n"
 	out "$f"
 }
+
+# The field separator within tmux-resurrect records.
+TMR_FIELD_SEP=$'\t'
 
 # Construct a new tmux format which escapes the value produced by the supplied tmux format.
 # The escaping is performed by the tmux server.
@@ -90,7 +91,7 @@ tmr:fields() {
 	for f in "$@"; do
 		escaped_fields+=("$(escape_field "$f")")
 	done
-	local IFS="$d"
+	local IFS="${TMR_FIELD_SEP}"
 	outln "${escaped_fields[*]}"
 }
 
@@ -101,7 +102,7 @@ tmr:tmux-fields() {
 	for f in "$@"; do
 		escaped_fields+=("$(escape_tmux_format_field "$f")")
 	done
-	local IFS="$d"
+	local IFS="${TMR_FIELD_SEP}"
 	outln "${escaped_fields[*]}"
 }
 
@@ -109,7 +110,7 @@ tmr:tmux-fields() {
 tmr:read() {
 	# Read fields raw, separating only on tabs, until newline.
 	# The var names given in our arguments are set to those raw field values.
-	IFS="$d" read -r "$@" || return $?
+	IFS="${TMR_FIELD_SEP}" read -r "$@" || return $?
 	while [[ $# -gt 0 ]]; do
 		# Get the escaped value of the named var, un-escape it, and store it in
 		# our temp variable. The temp is just to avoid masking error codes.
