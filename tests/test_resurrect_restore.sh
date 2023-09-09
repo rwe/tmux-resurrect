@@ -25,8 +25,8 @@ main() {
 	setup_before_restore
 	restore_tmux_environment_and_save_again
 
-	if last_save_file_differs_helper "tests/fixtures/restore_file.txt"; then
-		fail_helper "Saved file not correct after restore"
+	if last_save_file_differs_helper 'tests/fixtures/restore_file.txt'; then
+		fail_helper 'Saved file not correct after restore'
 	fi
 	exit_helper
 }

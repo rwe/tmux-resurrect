@@ -15,8 +15,8 @@ main() {
 	mkdir -p /tmp/bar # setup required dirs
 	create_tmux_test_environment_and_save
 
-	if last_save_file_differs_helper "tests/fixtures/save_file.txt"; then
-		fail_helper "Saved file not correct (initial save)"
+	if last_save_file_differs_helper 'tests/fixtures/save_file.txt'; then
+		fail_helper 'Saved file not correct (initial save)'
 	fi
 	exit_helper
 }
