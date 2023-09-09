@@ -228,10 +228,6 @@ restore_active_and_alternate_session_state() {
 	tmux switch-client -t "$client_session"
 }
 
-restore_active_and_alternate_sessions() {
-	each-record 'state' restore_active_and_alternate_session_state
-}
-
 restore_grouped_session() {
 	local _line_type grouped_session original_session _colon_alternate_window_index _colon_active_window_index
 	tmr:read _line_type grouped_session original_session _colon_alternate_window_index _colon_active_window_index || return $?
@@ -271,11 +267,6 @@ detect_if_restoring_from_scratch() {
 
 # functions called from main (ordered)
 
-restore_all_panes() {
-	local restore_from_scratch="$1" restore_pane_contents="$2"
-	each-record 'pane' restore_pane "${restore_from_scratch}" "${restore_pane_contents}"
-}
-
 handle_session_0() {
 	local current_session
 	current_session="$(tmux display -p '#{client_session}')"
@@ -302,10 +293,6 @@ restore_window_property() {
 	else
 		tmux set-option -t "${session_name}:${window_index}" automatic-rename "$automatic_rename"
 	fi
-}
-
-restore_window_properties() {
-	each-record 'window' restore_window_property
 }
 
 restore_one_pane_process() {
@@ -340,20 +327,12 @@ restore_one_pane_process() {
 	tmux send-keys -t "${pane_id}" "$pane_full_command" 'C-m'
 }
 
-restore_all_pane_processes() {
-	each-record 'pane' restore_one_pane_process
-}
-
 restore_active_pane_for_window() {
 	local _line_type session_name window_index _window_active _colon_window_flags pane_index pane_title _colon_pane_current_path pane_active _pane_current_command _colon_pane_full_command
 	tmr:read _line_type session_name window_index _window_active _colon_window_flags pane_index pane_title _colon_pane_current_path pane_active _pane_current_command _colon_pane_full_command || return $?
 	[[ "${pane_active}" == 1 ]] || return 0
 	tmux switch-client -t "${session_name}:${window_index}"
 	tmux select-pane -t "$pane_index"
-}
-
-restore_active_pane_for_each_window() {
-	each-record 'pane' restore_active_pane_for_window
 }
 
 restore_zoomed_window() {
@@ -365,20 +344,12 @@ restore_zoomed_window() {
 	tmux resize-pane -t "${session_name}:${window_index}" -Z
 }
 
-restore_zoomed_windows() {
-	each-record 'pane' restore_zoomed_window
-}
-
 restore_grouped_session_and_windows() {
 	local line
 	read -r line || return $?
 
 	restore_grouped_session <<< "$line"
 	restore_active_and_alternate_windows_for_grouped_session <<< "$line"
-}
-
-restore_grouped_sessions() {
-	each-record 'grouped_session' restore_grouped_session_and_windows
 }
 
 restore_active_and_alternate_windows() {
@@ -403,7 +374,7 @@ restore_active_and_alternate_windows() {
 	done
 }
 
-# A cleanup that happens after 'restore_all_panes' seems to fix fish shell
+# A cleanup that happens after all 'restore_pane's seems to fix fish shell
 # users' restore problems.
 cleanup_restored_pane_contents() {
 	local restore_dir
@@ -460,24 +431,24 @@ tmr:restore() (
 		pane_content_files_restore_from_archive
 	fi
 
-	restore_all_panes "${restore_from_scratch}" "${restore_pane_contents}" < "${resurrect_file}"
+	each-record 'pane' < "${resurrect_file}" restore_pane "${restore_from_scratch}" "${restore_pane_contents}"
 
 	if [[ "${restore_from_scratch}" == true ]] && ! has_restored_session_0; then
 		handle_session_0
 	fi
 
-	restore_window_properties >/dev/null 2>&1 < "${resurrect_file}"
+	each-record 'window' < "${resurrect_file}" restore_window_property >/dev/null 2>&1
 	execute_hook 'pre-restore-pane-processes'
 	if restore_pane_processes_enabled; then
-		restore_all_pane_processes < "${resurrect_file}"
+		each-record 'pane' < "${resurrect_file}" restore_one_pane_process
 	fi
 	# below functions restore exact cursor positions
-	restore_active_pane_for_each_window < "${resurrect_file}"
-	restore_zoomed_windows < "${resurrect_file}"
+	each-record 'pane' < "${resurrect_file}" restore_active_pane_for_window
+	each-record 'pane' < "${resurrect_file}" restore_zoomed_window
 	# also restores active and alt windows for grouped sessions
-	restore_grouped_sessions < "${resurrect_file}"
-	restore_active_and_alternate_windows  < "${resurrect_file}"
-	restore_active_and_alternate_sessions < "${resurrect_file}"
+	each-record 'grouped_session' < "${resurrect_file}" restore_grouped_session_and_windows
+	restore_active_and_alternate_windows < "${resurrect_file}"
+	each-record 'state' < "${resurrect_file}" restore_active_and_alternate_session_state
 
 	if [[ "${restore_pane_contents}" == true ]]; then
 		cleanup_restored_pane_contents
