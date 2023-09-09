@@ -16,8 +16,9 @@ main() {
 	create_tmux_test_environment_and_save
 
 	if last_save_file_differs_helper 'tests/fixtures/save_file.txt'; then
-		fail_helper 'Saved file not correct (initial save)'
+		test:fail 'Saved file not correct (initial save)'
+	else
+		test:ok
 	fi
-	exit_helper
 }
 main
