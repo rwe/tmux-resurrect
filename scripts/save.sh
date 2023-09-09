@@ -356,9 +356,11 @@ save_all() {
 	execute_hook 'post-save-all'
 }
 
+_min_supported_tmux_=1.9
+
 # if first argument is "quiet", script produces no output.
 tmr:save() {
-	tmr:check-tmux-version "${SUPPORTED_VERSION}" || return $?
+	tmr:check-tmux-version "${_min_supported_tmux_}" || return $?
 
 	if [[ "${1:-}" != 'quiet' ]]; then
 		local spinner_pid

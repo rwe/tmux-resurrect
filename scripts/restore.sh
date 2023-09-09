@@ -404,8 +404,10 @@ cleanup_restored_pane_contents() {
 	rm "${restore_dir}"/*
 }
 
+_min_supported_tmux_=1.9
+
 tmr:restore() {
-	tmr:check-tmux-version "${SUPPORTED_VERSION}" || return $?
+	tmr:check-tmux-version "${_min_supported_tmux_}" || return $?
 
 	local resurrect_file
 	resurrect_file="$(last_resurrect_file)"

@@ -4,7 +4,6 @@
 
 source "${CURRENT_DIR}/variables.sh"
 
-SUPPORTED_VERSION=1.9
 RESURRECT_FILE_PREFIX=tmux_resurrect
 RESURRECT_FILE_EXTENSION=txt
 
